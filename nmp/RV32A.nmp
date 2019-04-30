@@ -42,8 +42,8 @@ op lr_w(aq: bool, rl: bool, addr: reg_t,dest: reg_t)
 	image  = format("00010 %1b %1b 00000 %s 010 %s 0101111", aq, rl, addr, dest)
 	action = {
 		let vAddr = R[addr];
-		setR(dest,M32[vAddr]);
-		// empty, no simulation
+		setR(dest,coerce(int(32),M32[vAddr]));
+		//how to register a reservation on the memory word M32[vAddr] ?
 	}
 
 // src= rs2, addr=rs1, dest=rd
