@@ -1,0 +1,253 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+// 32-bit atomic instructions
+op rv32a =
+	  lr_w
+	| sc_w
+	| amoswap_w
+	| amoadd_w
+	| amoxor_w
+	| amoand_w
+	| amoor_w
+	| amomin_w
+	| amomax_w
+	| amominu_w
+	| amomaxu_w
+
+
+// addr = rs1, dest = rd
+//pour lr et sc : aq et rl sont set
+op lr_w(aq: bool, rl: bool, addr: reg_t,dest: reg_t)
+	syntax = format("lr.w %s, (%s)", dest, addr) 
+	image  = format("00010 %1b %1b 00000 %s 010 %s 0101111", aq, rl, addr, dest)
+	action = {
+		let vAddr = R[addr];
+		setR(dest,M32[vAddr]);
+		// empty, no simulation
+	}
+
+// src= rs2, addr=rs1, dest=rd
+op sc_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("sc.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00011 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		let value = R[src];
+		let vAddr = R[addr];
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		StoreMemoryWORD(uncached, value, pAddr, vAddr);
+		//if(storeSuceed) then
+			setR(dest,0); //store succeed
+		//else 
+		//	setR(dest,1); //store fail
+		//			failure code of 1 to mean “unspecified”. 
+		//			More specific failure codes might be defined in future versions or extensions to the ISA.
+		//endif;
+	}
+
+// src= rs2, addr=rs1, dest=rd
+op amoswap_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoswap.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00001 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// set memory word t to R[rs2]
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		let result = R[src];
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amoadd_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoadd.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		//pour synchronisation, regarder bit aq et rl
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+
+		let vAddr = R[addr];		// address in R[rs1]
+		let t = M32[vAddr];		// t : memory word at address vAddr
+		
+		// memory word t take the value t + R[rs2]
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		let result = t + R[src];
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);			// set rd to the sign extension of t
+	}
+
+op amoxor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoxor.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t ^ R[rs2])
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		let result = t ^ R[src];
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amoand_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoand.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("01100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t & R[rs2])
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		let result = t & R[src];
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amoor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t,  dest: reg_t)
+	syntax = format("amoor.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("01000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t | R[rs2])
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		let result = t | R[src];
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amomin_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomin.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("10000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t MIN R[rs2])
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		
+		let condition = t < R[src];
+		if condition then
+			let result = t;
+		else				//Dans les ref: utilisation du complément à deux pour chercher le min
+			let result = R[src];
+		endif;
+		  	
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amomax_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomax.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("10100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t MAX R[rs2])
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		
+		let condition = t > R[src];
+		if condition then
+			let result = t;
+		else				//Dans les ref: utilisation du complément à deux pour chercher le max
+			let result = R[src];
+		endif;
+
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amominu.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("11000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];	
+
+		let tu = coerce(card(32),t);
+		let valSrcU = coerce(card(32),R[src]);	
+
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		
+		let condition = tu < valSrcU;
+		if condition then
+			let result = tu;
+		else				
+			let result = valSrcU;
+		endif; 
+
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
+
+op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomaxu.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("11100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then aquirement(); endif;
+		if rl then release(); endif;
+		let vAddr = R[addr];
+		let t = M32[vAddr];	
+
+		let tu = coerce(card(32),t);
+		let valSrcU = coerce(card(32),R[src]);	
+
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
+		
+		let condition = tu > valSrcU;
+		if condition then
+			let result = tu;
+		else				
+			let result = valSrcU;
+		endif;
+   
+		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
+		
+		setR(dest,t);
+	}
