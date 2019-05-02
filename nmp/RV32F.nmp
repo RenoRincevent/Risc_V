@@ -1,0 +1,354 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Floating Point Operations
+op rv32f =
+	  flw
+	| fsw
+	| fmuladd_s
+	| fmulsub_s
+	| fnegmuladd_s
+	| fnegmulsub_s
+	| fadd_s
+	| fsub_s
+	| fmul_s
+	| fdiv_s
+	| fsqrt_s
+	| fsgnj_s 
+	| fsgnjn_s 
+	| fsgnjx_s 
+	| fmin_s
+	| fmax_s
+	| fcvt_w_s
+	| fcvt_wu_s
+	| fcvt_s_w
+	| fcvt_s_wu
+	| fmv_w_x
+	| fmv_x_w
+	| fle_s
+	| flt_s
+	| feq_s
+	| fclass_s
+
+
+// load and store
+// --------------
+//    FLW
+op flw(offset: int(12), base: reg_t, dest: freg_t)
+	syntax = format("flw %s, %d(%s)", dest, offset, base)
+	image = format("%12b %s 010 %s 0000111", offset, base, dest)
+	action = {	
+		let vAddr = offset + R[base];
+		let memword = M32F[vAddr];
+		setF(dest, memword) ;
+	}
+
+//    FSW 
+// src = rs2, base = rs1
+op fsw(offset: int(12), src: freg_t, base: reg_t)
+	syntax = format("fsw %s, %d(%s)", src, offset, base)
+	image = format("%7b %s %s 010 %5b 0100111", offset<11..5>, src, base, offset<4..0>)
+	action = {	
+		//let vAddr = offset + R[base];
+		//AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		//let dataword = F[src];
+		//StoreMemoryWORD(uncached, dataword, pAddr, vAddr); //erreur avec StoreMemoryWordF
+		//Erreur sur le store :
+		//assigning float/int to int/float is ambiguous.
+		//As default, resolved to bit to bit assignment.
+		//Use instead either field notation for bit to bit assignment
+		//or explicit coerce for value conversion.
+		//	M32[__gliss_102_pAddr: float(23, 9)]: int(32)=cast<int(32)>(__gliss_103_dataword: float(23, 9));
+
+	}
+
+// fused multiply add/sub
+// rm : rounding mode
+// RNE (000)= Round to Nearest, ties to Even
+// RTZ (001)= Round towards Zero
+// RDN (010)= Round Down (towards -infinite)
+// RUP (011)= Round Up (towards +infinite)
+// RMM (100)= Round to Nearest, ties to Max Magnitude
+// (101) = Invalid, Reserved for future use
+// (110) = Invalid, Reserved for future use
+// (111) = TODO selects dynamic rounding mode ?
+// ----------------------
+//   FMADD.S :
+op fmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
+	action = {
+		//regarder si le mode arrondi avec rm
+		// puis faire dest = src1 * src2 + src3 (l'arrondir selon le cas)
+		// si src1,src2 = infini*0 ou 0*infini alors lever un exception	 TODO "even when the addend is a quiet NaN" ?
+		// empty, no simulation
+		let r1 = F[src1]; //reg F[32, float(23,9)]
+		let r2 = F[src2];
+		let r3 = F[src3];
+		//if (r1 == infinite && r2 == 0) || (r1 == 0 && r2 == infinite) then //TODO r1 == infinite ?
+		//	SignalException(Trap);
+		//else
+			//regarder quel rounding mode d'abord
+			let result = r1*r2+r3;
+			let resultRound = rounding(result,rm); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
+			setR(dest,coerce(word,resultRound));
+		//endif;
+		
+	}
+
+//   FMSUB.S
+op fmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		//if (r1 == infinite && r2 == 0) || (r1 == 0 && r2 == infinite) then
+		//	SignalException(Trap);
+		//else
+			let result = r1*r2-r3;
+			let resultRound = rounding(result,rm);
+			setR(dest,coerce(word,resultRound));
+		//endif;
+		// empty, no simulation
+	}
+
+//   FNMADD.S
+op fnegmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		//if (r1 == infinite && r2 == 0) || (r1 == 0 && r2 == infinite) then
+		//	SignalException(Trap);
+		//else
+			let result = -r1*r2-r3;
+			let resultRound = rounding(result,rm);
+			setR(dest,coerce(word,resultRound));
+		//endif;
+		// empty, no simulation
+	}
+
+//   FNMSUB.S
+op fnegmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
+	action = {
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		//if (r1 == infinite && r2 == 0) || (r1 == 0 && r2 == infinite) then
+		//	SignalException(Trap);
+		//else
+			let result = -r1*r2+r3;
+			let resultRound = rounding(result,rm);
+			setR(dest,coerce(word,resultRound));
+		//endif;	
+		// empty, no simulation
+	}
+
+// Single-Precision Floating-Point Computational Instructions
+// ----------------------------------------------------------
+//    FADD.S
+op fadd_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fadd.s %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let result = r1+r2;
+		let resultRound = rounding(result,rm);
+		setR(dest,coerce(word,resultRound));
+	}
+
+//    FSUB.S
+op fsub_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsub.s %s, %s, %s", dest, src1, src2)
+	image = format("0000100 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let result = r1-r2;
+		let resultRound = rounding(result,rm);
+		setR(dest,coerce(word,resultRound));
+	}
+
+//   FMUL.S
+op fmul_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmul.s %s, %s, %s", dest, src1, src2)
+	image = format("0001000 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let result = r1*r2;
+		let resultRound = rounding(result,rm);
+		setR(dest,coerce(word,resultRound));
+	}
+
+//    FDIV.S
+op fdiv_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fdiv.s %s, %s, %s", dest, src1, src2)
+	image = format("0001100 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let result = r1/r2;
+		let resultRound = rounding(result,rm);
+		setR(dest,coerce(word,resultRound));
+	}
+
+// FSQRT.S
+op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsqrt.s %s, %s", dest, src)
+	image = format("0101100 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+	
+// FMIN.S
+op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmin.s %s, %s, %s", dest, src1, src2) 
+	image = format("0010100 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+
+// FMAX.S
+op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmax.s %s, %s, %s", dest, src1, src2) 
+	image = format("0010100 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+// Single-Precision Floating-Point Conversion and Move Instructions
+// -----------------------------------------------------------------
+//    FSGNJ.S
+op fsgnj_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fsgnj.s %s, %s, %s", dest, src1, src2) 
+	image = format("0010000 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FSGNJN.S	
+op fsgnjn_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fsgnjn.s %s, %s, %s", dest, src1, src2)  
+	image = format("0010000 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FSGNJX.S
+op fsgnjx_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fsgnjx.s %s, %s, %s", dest, src1, src2)
+	image = format("0010000 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FCVT.W.S
+op fcvt_w_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.w.s %s, %s", dest, src) 
+	image = format("1100000 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FCVT.WU.S
+op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.wu.s %s, %s", dest, src) 
+	image = format("1100000 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FCVT.S.W
+op fcvt_s_w(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.w %s, %s", dest, src) 
+	image = format("1101000 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+	
+//   FCVT.S.WU
+op fcvt_s_wu(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.wu %s, %s", dest, src) 
+	image = format("1101000 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FMV.W.X
+op fmv_w_x(src: reg_t, dest: freg_t)
+	syntax = format("fmv.w.x %s, %s", dest, src)
+	image = format("1111000 00000 %s 000 %s 1010011", src, dest)
+	action = {	
+		// empty, no simulation
+	}
+	
+	//   FMV.X.W
+op fmv_x_w(src: reg_t, dest: freg_t)
+	syntax = format("fmv.w.x %s, %s", dest, src)
+	image = format("1110000 00000 %s 000 %s 1010011", src, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+
+// Single-Precision Floating-Point Compare Instructions
+// ----------------------------------------------------
+//   FLE.S
+op fle_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("fle.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+//   FLT.S
+op flt_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("flt.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+	
+//   FEQ.S
+op feq_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("feq.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+// classification instructions
+op fclass_s(src: freg_t, dest: reg_t)
+	syntax = format("fclass.s %s, %s", dest, src)
+	image = format("1110000 00000 %s 001 %s 1010011", src, dest)
+	action = {	
+		// empty, no simulation
+	}
+

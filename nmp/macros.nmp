@@ -27,6 +27,7 @@ canon uword "COP_SW"(z: card(2), rt: card(4))
 canon "SyncOperation"(stype: card(5))
 canon "aquirement"()
 canon "release"()
+canon word "rounding"(result: float(23,9), rm: card(3))
 
 
 // macros
@@ -41,7 +42,7 @@ macro _64_bit_arithmetic_overflow(d, t, s) = \
 
 let BreakPoint = 0
 let IntegerOverflow = 1
-let IntegerOverflow = 2
+let IntegerOverflow = 2 //TODO erreur ici ?
 let AddressError = 3
 let SystemCall = 4
 let Trap = 5
@@ -77,7 +78,11 @@ macro StoreMemoryHALFWORD(CCA, MemElem, pAddr, vAddr) = M16[pAddr] = MemElem
 macro StoreMemoryWORD(CCA, MemElem, pAddr, vAddr) = M32[pAddr] = MemElem
 // macro StoreMemoryDOUBLEWORD(CCA, MemElem, pAddr, vAddr) = M64[pAddr] = MemElem
 
+macro StoreMemoryWORDF(CCA, MemElem, pAddr, vAddr) = M32F[pAddr] = MemElem
+
 
 //macro for AMOs instructions
 macro aquirement() = "aquirement"()
 macro release() = "release"()
+
+macro rounding(result,rm) = "rounding"(result,rm)

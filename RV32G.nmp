@@ -31,7 +31,7 @@ type word      = int (32)
 type dword     = int (64)
 type address   = card(32)
 type index     = card( 5)
-
+type real  = float(23,9)
 
 include "nmp/config.nmp"
 include "nmp/state.nmp"
@@ -126,7 +126,7 @@ mode freg_t (f: index) = f
 		case 31:	"f31"
 		}
 	image  = format ( "%5b", f )
-
+macro setF(d, v) = if d != 0 then F[d] = v; endif 
 
 
 mode IMM16(n: half) = n
