@@ -46,7 +46,7 @@ void SyncOperation(int stype);
 void aquirement();
 void release();
 
-int32_t rounding(float result, int rm);
+float rounding(float result, int rm);
 
 #if defined(__cplusplus)
 }

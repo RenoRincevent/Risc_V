@@ -27,7 +27,7 @@ canon uword "COP_SW"(z: card(2), rt: card(4))
 canon "SyncOperation"(stype: card(5))
 canon "aquirement"()
 canon "release"()
-canon word "rounding"(result: float(23,9), rm: card(3))
+canon float(23,9) "rounding"(result: float(23,9), rm: card(3))
 
 
 // macros

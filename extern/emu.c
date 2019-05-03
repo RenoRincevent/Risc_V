@@ -71,6 +71,6 @@ void release(){
 /**
  * Function use for Single-Precision Floating-Point Computational Instructions
  */
-int32_t rounding(float result, int rm){
-	return (int32_t)result;
+float rounding(float result, int rm){
+	return result;
 }
