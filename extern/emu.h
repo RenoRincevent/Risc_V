@@ -36,6 +36,7 @@ extern  "C" {
 #define AddressError	2
 #define SystemCall		3
 #define Trap			4
+#define InvalidOperation 5
 
 void Prefetch(int uncached, int32_t pAddr, int32_t vAddr, int IorD, int hint);
 void SignalException(int exception);
@@ -45,6 +46,8 @@ void SyncOperation(int stype);
 
 void aquirement();
 void release();
+void reserve(int memoryWord);
+uint32_t reserved(int memoryWord);
 
 float rounding(float result, int rm);
 

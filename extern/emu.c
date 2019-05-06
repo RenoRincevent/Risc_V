@@ -68,6 +68,13 @@ void aquirement(){
 void release(){
 }
 
+void reserve(int memoryWord){
+}
+
+uint32_t reserved(int memoryWord){
+	return 0;
+}
+
 /**
  * Function use for Single-Precision Floating-Point Computational Instructions
  */

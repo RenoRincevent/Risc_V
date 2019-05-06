@@ -37,13 +37,14 @@ op rv32a =
 
 // addr = rs1, dest = rd
 //pour lr et sc : aq et rl sont set
+// TODO que faire de aq et rl pour lr_w et sc_w
 op lr_w(aq: bool, rl: bool, addr: reg_t,dest: reg_t)
 	syntax = format("lr.w %s, (%s)", dest, addr) 
 	image  = format("00010 %1b %1b 00000 %s 010 %s 0101111", aq, rl, addr, dest)
 	action = {
 		let vAddr = R[addr];
-		setR(dest,coerce(int(32),M32[vAddr]));
-		//how to register a reservation on the memory word M32[vAddr] ?
+		setR(dest,M32[vAddr]);
+		reserve(M32[vAddr]);
 	}
 
 // src= rs2, addr=rs1, dest=rd
@@ -54,14 +55,14 @@ op sc_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		let value = R[src];
 		let vAddr = R[addr];
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
-		StoreMemoryWORD(uncached, value, pAddr, vAddr);
-		//if(storeSuceed) then
+		if(reserved(M32[vAddr])) then
+			StoreMemoryWORD(uncached, value, pAddr, vAddr);
 			setR(dest,0); //store succeed
-		//else 
-		//	setR(dest,1); //store fail
-		//			failure code of 1 to mean “unspecified”. 
-		//			More specific failure codes might be defined in future versions or extensions to the ISA.
-		//endif;
+		else 
+			setR(dest,1); //store fail
+					//failure code of 1 to mean “unspecified”. 
+					//More specific failure codes might be defined in future versions or extensions to the ISA.
+		endif;
 	}
 
 // src= rs2, addr=rs1, dest=rd
@@ -86,7 +87,6 @@ op amoadd_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 	syntax = format("amoadd.w %s, %s, (%s)", dest, src, addr) 
 	image  = format("00000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
 	action = {
-		//pour synchronisation, regarder bit aq et rl
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 
