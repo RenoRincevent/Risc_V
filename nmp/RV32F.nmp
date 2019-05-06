@@ -83,7 +83,6 @@ op fsw(offset: int(12), src: freg_t, base: reg_t)
 // (101) = Invalid, Reserved for future use
 // (110) = Invalid, Reserved for future use
 // (111) = TODO selects dynamic rounding mode ? in frm -> fcsr<7..5> (fcsr : floating-point control and status register)
-// TODO où et comment utiliser le registre fcsr ?
 // ----------------------
 //   FMADD.S :
 op fmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
@@ -93,13 +92,18 @@ op fmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t
 		let r1 = F[src1]; //reg F[32, float(23,9)]
 		let r2 = F[src2];
 		let r3 = F[src3];
+		let roundingMod = rm;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
 		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
-			SignalException(InvalidOperation);
+			FCSR<4..4> = 1;
+			SignalException(InvalidOperation);			
 		else
 			let result = r1*r2+r3;
-			let resultRound = rounding(result,rm); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = rounding(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
 			setF(dest,resultRound); 
 		endif;
 		
@@ -113,11 +117,17 @@ op fmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t
 		let r1 = F[src1];
 		let r2 = F[src2];
 		let r3 = F[src3];
+		let roundingMod = rm;
+
 		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;			
 			SignalException(InvalidOperation);
 		else
 			let result = r1*r2-r3;
-			let resultRound = rounding(result,rm); 
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = rounding(result,roundingMod); 
 			setF(dest,resultRound);
 		endif;
 	}
@@ -130,11 +140,17 @@ op fnegmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: fre
 		let r1 = F[src1];
 		let r2 = F[src2];
 		let r3 = F[src3];
+		let roundingMod = rm;
+
 		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;	
 			SignalException(InvalidOperation);
 		else
 			let result = -r1*r2-r3;
-			let resultRound = rounding(result,rm); 
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = rounding(result,roundingMod); 
 			setF(dest,resultRound);
 		endif;
 	}
@@ -147,11 +163,17 @@ op fnegmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: fre
 		let r1 = F[src1];
 		let r2 = F[src2];
 		let r3 = F[src3];
+		let roundingMod = rm;
+		
 		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
 			SignalException(InvalidOperation);
 		else
 			let result = -r1*r2+r3;
-			let resultRound = rounding(result,rm); 
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = rounding(result,roundingMod); 
 			setF(dest,resultRound);
 		endif;	
 	}
@@ -165,8 +187,13 @@ op fadd_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	action = {	
 		let r1 = F[src1];
 		let r2 = F[src2];
+		let roundingMod = rm;
+
 		let result = r1+r2;
-		let resultRound = rounding(result,rm); 
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = rounding(result,roundingMod); 
 		setF(dest,resultRound);
 	}
 
@@ -177,8 +204,13 @@ op fsub_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	action = {
 		let r1 = F[src1];
 		let r2 = F[src2];
+		let roundingMod = rm;
+
 		let result = r1-r2;
-		let resultRound = rounding(result,rm); 
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = rounding(result,roundingMod); 
 		setF(dest,resultRound);
 	}
 
@@ -189,8 +221,13 @@ op fmul_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	action = {	
 		let r1 = F[src1];
 		let r2 = F[src2];
+		let roundingMod = rm;
+
 		let result = r1*r2;
-		let resultRound = rounding(result,rm); 
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = rounding(result,roundingMod); 
 		setF(dest,resultRound);
 	}
 
@@ -201,8 +238,14 @@ op fdiv_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	action = {	
 		let r1 = F[src1];
 		let r2 = F[src2];
+		if r2 == 0 then FCSR<3..3> = 1; endif;
+		let roundingMod = rm;
+
 		let result = r1/r2;
-		let resultRound = rounding(result,rm); 
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = rounding(result,roundingMod); 
 		setF(dest,resultRound);
 	}
 
@@ -210,7 +253,25 @@ op fdiv_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fsqrt.s %s, %s", dest, src)
 	image = format("0101100 00000 %s %3b %s 1010011", src, rm, dest)
-	action = {	
+	action = {
+		//If F[src] is NaN, a NaN shall be returned.
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+		if(F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0>) then
+			setF(dest,F[src]);
+		endif;
+
+		//If F[src] is ±0 or +Inf, F[src] shall be returned.
+		if(F[src]<30..0> == 0 || (F[src]<31..31> == 0 && F[src]<30..23> == 255 && F[src]<22..0> == 0)) then
+			setF(dest,F[src]);
+		endif;
+
+		//If F[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
+		if(F[src]<31..31> == 1 && F[src]<30..23> != 0) then
+			//
+		endif;
+
+		//If F[src] > PosNormal, compute sqrt	
 		// empty, no simulation
 	}
 	
