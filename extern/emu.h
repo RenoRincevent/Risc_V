@@ -53,6 +53,8 @@ uint32_t reserved(int memoryWord);
 float rounding(float result, int rm);
 float fsqrt32(float src);
 
+double roundingDouble(double result, int rm);
+
 #if defined(__cplusplus)
 }
 #endif

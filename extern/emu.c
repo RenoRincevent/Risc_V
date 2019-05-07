@@ -85,3 +85,8 @@ float fsqrt32(float src){
 	//return sqrt(src); ERROR
 	return src;
 }
+
+// function use for double-precision 
+double roundingDouble(double result, int rm){
+	return result;
+}

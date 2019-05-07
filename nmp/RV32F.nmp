@@ -258,13 +258,6 @@ op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
 		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
 		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
 
-		//switch(F[src]<31..0>){
-		//case F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0> :
-		//	setF(dest,F[src]);
-		//case F[src]<30..0> == 0 || (F[src]<31..31> == 0 && F[src]<30..23> == 255 && F[src]<22..0> == 0) :
-		//	setF(dest,F[src]);
-		//};
-
 		//If F[src] is NaN, a NaN shall be returned.
 		if(F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0>) then
 			setF(dest,F[src]);
@@ -565,13 +558,13 @@ op feq_s(src2: freg_t, src1: freg_t, dest: reg_t)
 	}
 
 // classification instructions //TODO switch
-//	bit sign	    exponent	          fraction
+//	bit sign	    exponent	          mantissa
 // (F[src]<31..31>   &&   F[src]<30..23>   &&   F[src]<22..0>)
 op fclass_s(src: freg_t, dest: reg_t)
 	syntax = format("fclass.s %s, %s", dest, src)
 	image = format("1110000 00000 %s 001 %s 1010011", src, dest)
 	action = {	
-		R[dest] = 0;
+		setR(dest,0);
 		// TODO remplacer par switch ? la condition ne peut être qu'un integer (et if .. else if .. pas possible )
 		if(F[src]<31..31> == 1 && F[src]<30..23> == 255 && F[src]<22..0> == 0) then
 			setR(dest,1); endif;//NegInfinity, bit 0
