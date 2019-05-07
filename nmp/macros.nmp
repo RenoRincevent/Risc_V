@@ -30,6 +30,7 @@ canon "release"()
 canon float(23,9) "rounding"(result: float(23,9), rm: card(3))
 canon "reserve"(memoryWord: int(32))
 canon uword "reserved"(memoryWord: int(32))
+canon float(23,9) "fsqrt32"(src: float(23,9))
 
 
 // macros
@@ -92,5 +93,6 @@ macro reserved(memoryWord) = "reserved"(memoryWord)
 
 //macro for floating-point operations
 macro rounding(result,rm) = "rounding"(result,rm)
+macro fsqrt32(src) = "fsqrt32"(src)
 
 //

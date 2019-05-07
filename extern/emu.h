@@ -22,6 +22,7 @@
 #define GLISS_RISCV_EMU_H
 
 #include <stdint.h>
+#include <math.h>
 
 #if defined(__cplusplus)
 extern  "C" {
@@ -50,6 +51,7 @@ void reserve(int memoryWord);
 uint32_t reserved(int memoryWord);
 
 float rounding(float result, int rm);
+float fsqrt32(float src);
 
 #if defined(__cplusplus)
 }
