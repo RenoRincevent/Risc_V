@@ -82,5 +82,6 @@ float rounding(float result, int rm){
 	return result;
 }
 float fsqrt32(float src){
-	return sqrt(src);
+	//return sqrt(src); ERROR
+	return src;
 }

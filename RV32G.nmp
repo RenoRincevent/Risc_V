@@ -32,6 +32,7 @@ type dword     = int (64)
 type address   = card(32)
 type index     = card( 5)
 type real  = float(23,9)
+type doublef = float(52,12)
 
 include "nmp/config.nmp"
 include "nmp/state.nmp"
@@ -127,6 +128,7 @@ mode freg_t (f: index) = f
 		}
 	image  = format ( "%5b", f )
 macro setF(d, v) = if d != 0 then F[d] = v; endif 
+macro setD(d, v) = if d != 0 then D[d] = v; endif
 
 
 mode IMM16(n: half) = n
@@ -159,7 +161,8 @@ op allinstr =
 	| all_loads_32
 	| all_stores_32
 	| rv32a // atomic operations 32 bits
-	| rv32f // floating point 32 bits
+	| rv32f // single floating point 32 bits
+	| rv32d // double floating point 
 	
 
 op init ()
@@ -175,3 +178,4 @@ include "nmp/RV32M.nmp"
 include "nmp/control.nmp"
 include "nmp/special.nmp"
 include "nmp/RV32F.nmp"
+include "nmp/RV32D.nmp"

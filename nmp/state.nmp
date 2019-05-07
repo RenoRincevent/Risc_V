@@ -27,11 +27,13 @@ mem M16	[32,  half] alias = M
 mem M32	[32,  word] alias = M
 mem M64	[32,  dword] alias = M
 mem M32F [32, real] alias = M
+mem M32D [32,doublef] alias = M
 
 reg PC  	[ 1, address] is_pc = 1
 reg NPC 	[ 1, address]
 reg R		[32, word]
 reg F		[32, float(23,9)]
+reg D		[32, doublef]
 reg LLbit	[ 1, card(1)]
 reg FCSR	[ 1, word]
 

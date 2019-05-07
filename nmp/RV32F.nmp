@@ -254,11 +254,18 @@ op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fsqrt.s %s, %s", dest, src)
 	image = format("0101100 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {
-		let domainError = 1;
-
-		//If F[src] is NaN, a NaN shall be returned.
+		let domainError = 1;		
 		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
 		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+
+		//switch(F[src]<31..0>){
+		//case F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0> :
+		//	setF(dest,F[src]);
+		//case F[src]<30..0> == 0 || (F[src]<31..31> == 0 && F[src]<30..23> == 255 && F[src]<22..0> == 0) :
+		//	setF(dest,F[src]);
+		//};
+
+		//If F[src] is NaN, a NaN shall be returned.
 		if(F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0>) then
 			setF(dest,F[src]);
 			domainError = 0;
@@ -402,14 +409,20 @@ op fcvt_w_s(src: freg_t, rm: card(3), dest: reg_t)
 	action = {	
 		let resultRound = rounding(F[src],rm);
 
-		//TODO output for out-of-range negative input		
+		//output for out-of-range negative input		
+		if(resultRound < (-2**31)) then
+			resultRound = coerce(float(23,9),-2**31);
+		endif;
 
 		//output for -infinite
 		if(resultRound<31..31>==1 && resultRound<30..23>==255) then
 			FCSR<2..2> = 1;			
 			resultRound = coerce(float(23,9),-2**31);
 		endif;
-		//TODO output for out-of-range positive input
+		//output for out-of-range positive input
+		if(resultRound > (2**31 - 1)) then
+			resultRound = coerce(float(23,9),2**31 - 1);
+		endif;
 
 		//output for +infinite or NaN
 		if(resultRound<30..23>==255 && resultRound<22..0>!=0) then
@@ -426,17 +439,23 @@ op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
 	action = {
 		let resultRound = rounding(F[src],rm);
 		
-		//TODO output for out-of-range negative input		
+		//output for out-of-range negative input
+		if(resultRound<31..31>==1) then
+			resultRound = coerce(float(23,9),0);
+		endif;		
 
 		//output for -infinite
 		if(resultRound<31..31>==1 && resultRound<30..23>==255) then
 			resultRound = coerce(float(23,9),0);
 		endif;
-		//TODO output for out-of-range positive input
+		//output for out-of-range positive input
+		if(resultRound > (2*32 - 1)) then
+			resultRound = coerce(float(23,9),2**32 - 1);
+		endif;
 
 		//output for +infinite or NaN
 		if(resultRound<30..23>==255 && resultRound<22..0>!=0) then
-			resultRound = coerce(float(23,9),2**31 - 1);
+			resultRound = coerce(float(23,9),2**32 - 1);
 		endif; 
 
 		setR(dest,coerce(uword,resultRound));

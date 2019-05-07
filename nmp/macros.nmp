@@ -83,6 +83,7 @@ macro StoreMemoryWORD(CCA, MemElem, pAddr, vAddr) = M32[pAddr] = MemElem
 // macro StoreMemoryDOUBLEWORD(CCA, MemElem, pAddr, vAddr) = M64[pAddr] = MemElem
 
 macro StoreMemoryWORDF(CCA, MemElem, pAddr, vAddr) = M32F[pAddr] = MemElem
+macro StoreMemoryWORDD(CCA, MemElem, pAddr, vAddr) = M32D[pAddr] = MemElem
 
 
 //macro for AMOs instructions
