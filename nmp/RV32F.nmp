@@ -372,7 +372,11 @@ op fsgnj_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnj.s %s, %s, %s", dest, src1, src2) endif 
 	image = format("0010000 %s %s 000 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,coerce(float(23,9),F[src2]<31..31>::F[src1]<30..0>));
+		if F[src1]==F[src2] then
+			setF(dest,F[src1]);
+		else
+			setF(dest,coerce(float(23,9),F[src2]<31..31>::F[src1]<30..0>));
+		endif;
 	}
 
 //   FSGNJN.S	
@@ -382,7 +386,11 @@ op fsgnjn_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnjn.s %s, %s, %s", dest, src1, src2) endif  
 	image = format("0010000 %s %s 001 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,coerce(float(23,9),(-F[src2]<31..31>)::F[src1]<30..0>));
+		if F[src1]==F[src2] then
+			setF(dest,-F[src1]);
+		else	
+			setF(dest,coerce(float(23,9),(-F[src2]<31..31>)::F[src1]<30..0>));
+		endif;
 	}
 
 //   FSGNJX.S
@@ -392,7 +400,12 @@ op fsgnjx_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnjx.s %s, %s, %s", dest, src1, src2) endif
 	image = format("0010000 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,coerce(float(23,9),(F[src2]<31..31> ^ F[src1]<31..31>)::F[src1]<30..0>));
+		if F[src1]==F[src2] then
+			F[src1]<63..63>=0;
+			setF(dest,F[src1]);
+		else
+			setF(dest,coerce(float(23,9),(F[src2]<31..31> ^ F[src1]<31..31>)::F[src1]<30..0>));
+		endif;
 	}
 
 //   FCVT.W.S //TODO switch
@@ -557,7 +570,7 @@ op feq_s(src2: freg_t, src1: freg_t, dest: reg_t)
 		endif;
 	}
 
-// classification instructions //TODO switch
+// classification instructions
 //	bit sign	    exponent	          mantissa
 // (F[src]<31..31>   &&   F[src]<30..23>   &&   F[src]<22..0>)
 op fclass_s(src: freg_t, dest: reg_t)
@@ -565,7 +578,6 @@ op fclass_s(src: freg_t, dest: reg_t)
 	image = format("1110000 00000 %s 001 %s 1010011", src, dest)
 	action = {	
 		setR(dest,0);
-		// TODO remplacer par switch ? la condition ne peut être qu'un integer (et if .. else if .. pas possible )
 		if(F[src]<31..31> == 1 && F[src]<30..23> == 255 && F[src]<22..0> == 0) then
 			setR(dest,1); endif;//NegInfinity, bit 0
 		if(F[src]<31..31> == 1 && F[src]<30..23> != 0 && F[src]<30..23> < 255) then

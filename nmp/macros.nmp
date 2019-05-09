@@ -32,6 +32,7 @@ canon "reserve"(memoryWord: int(32))
 canon uword "reserved"(memoryWord: int(32))
 canon float(23,9) "fsqrt32"(src: float(23,9))
 canon float(52,12) "roundingDouble"(result: float(52,12), rm: int(32))
+canon float(52,12) "fsqrt64"(src: float(52,12))
 
 
 // macros
@@ -99,3 +100,4 @@ macro fsqrt32(src) = "fsqrt32"(src)
 
 //
 macro roundingDouble(result,rm) = "roundingDouble"(result,rm)
+macro fsqrt64(src) = "fsqrt64"(src)

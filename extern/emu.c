@@ -90,3 +90,6 @@ float fsqrt32(float src){
 double roundingDouble(double result, int rm){
 	return result;
 }
+double fsqrt64(double src){
+	return src;
+}

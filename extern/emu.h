@@ -54,6 +54,7 @@ float rounding(float result, int rm);
 float fsqrt32(float src);
 
 double roundingDouble(double result, int rm);
+double fsqrt64(double src);
 
 #if defined(__cplusplus)
 }
