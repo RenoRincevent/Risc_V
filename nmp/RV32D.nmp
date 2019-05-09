@@ -450,21 +450,54 @@ op fle_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	syntax = format("fle.d %s, %s, %s", dest, src1, src2) 
 	image = format("1010001 %s %s 000 %s 1010011", src2, src1, dest)
 	action = {	
-		// empty, no simulation
+		//An invalid operation exception is raised if either input is NaN
+		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+			setR(dest,0);
+			SignalException(InvalidOperation);
+		else
+			let condition = D[src1] <= D[src2];
+			if condition then
+				setR(dest,1);
+			else 
+				setR(dest,0);
+			endif;  
+		endif;
 	}
 
 op flt_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	syntax = format("flt.d %s, %s, %s", dest, src1, src2)
 	image = format("1010001 %s %s 001 %s 1010011", src2, src1, dest)
 	action = {	
-		// empty, no simulation
+		//An invalid operation exception is raised if either input is NaN
+		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+			setR(dest,0);
+			SignalException(InvalidOperation);
+		else
+			let condition = D[src1] < D[src2];
+			if condition then
+				setR(dest,1);
+			else 
+				setR(dest,0);
+			endif;  
+		endif;
 	}
 	
 op feq_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	syntax = format("feq.d %s, %s, %s", dest, src1, src2)
 	image = format("1010001 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	
-		// empty, no simulation
+		//Only signaling NaN inputs cause an invalid operation exception
+		if(D[src1]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001 || D[src2]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001) then
+			setR(dest,0);
+			SignalException(InvalidOperation);
+		else
+			let condition = D[src1] == D[src2];
+			if condition then
+				setR(dest,1);
+			else
+				setR(dest,0);
+			endif;
+		endif;
 	}
 
 // 9.7 Double-Precision Floating-Point Classify Instruction 

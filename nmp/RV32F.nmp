@@ -539,7 +539,7 @@ op flt_s(src2: freg_t, src1: freg_t, dest: reg_t)
 			setR(dest,0);
 			SignalException(InvalidOperation);
 		else 
-			let condition = F[src1] <= F[src2];
+			let condition = F[src1] < F[src2];
 			if condition then
 				setR(dest,1);
 			else 
