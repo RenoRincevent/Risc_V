@@ -1,0 +1,66 @@
+/*
+ *	RISC-V Instruction Set
+ *    RV64IM Extension
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+
+op rv64m =
+	| mulw
+	| divw
+	| divuw
+	| remw
+	| remuw
+	
+
+op mulw(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulw %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 000 %s 0111011", multiplicand, multiplier, dest)
+	action = {
+		// empty, no simulation
+	} 
+
+op divw(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("divw %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 100 %s 0111011", divisor, dividend, dest)
+	action = {
+		// empty, no simulation
+	} 
+
+op divuw(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("divuw %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 101 %s 0111011", divisor, dividend, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op remw(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("remw %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 110 %s 0111011", divisor, dividend, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op remuw(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("remuw %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 111 %s 0111011", divisor, dividend, dest)
+	action = {
+		// empty, no simulation
+	}

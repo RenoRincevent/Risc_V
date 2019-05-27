@@ -18,8 +18,18 @@
  *	along with GLISS; if not, write to the Free Software
  *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
- // types
+
+include "nmp/config.nmp"
+include "nmp/state.nmp"
+include "nmp/macros.nmp"
+
+// GLISS configuration
+let proc = "rv64"         
+let bit_order = "uppermost"
+let gliss_isize = "32"
+//let bit_image_order =  1
+// types
+//TODO creer state64.nmp pour le 64 bits ?
 type bit       = card( 1)
 type ubyte     = card( 8)
 type uhalf     = card(16)
@@ -29,23 +39,8 @@ type byte      = int ( 8)
 type half      = int (16)
 type word      = int (32)
 type dword     = int (64)
-type address   = card(32)
+type address   = card(64)
 type index     = card( 5)
-type real      = float(23,9)
-type doublef   = float(52,12)
-
-include "nmp/config.nmp"
-include "nmp/state.nmp"
-include "nmp/macros.nmp"
-
-// GLISS configuration
-let proc = "RV32G"         
-let bit_order = "uppermost"
-let gliss_isize = "32"
-
-
-
-//let bit_image_order =  1
 
 
 // modes
@@ -127,8 +122,7 @@ mode freg_t (f: index) = f
 		case 31:	"f31"
 		}
 	image  = format ( "%5b", f )
-macro setF(d, v) = if d != 0 then F[d] = v; endif 
-macro setD(d, v) = if d != 0 then D[d] = v; endif
+
 
 
 mode IMM16(n: half) = n
@@ -158,18 +152,23 @@ op allinstr =
 	| all_branch
 	| all_special
 	| rv32m 	// muldiv 32 bits
+	| rv64m // muldiv 64 bits
+	| all_dshift
 	| all_loads_32
 	| all_stores_32
+	| all_loads_64
+	| all_stores_64
+	| all_floating
 	| rv32a // atomic operations 32 bits
-	| rv32f // single floating point 32 bits
-	| rv32d // double floating point 
-	
+	| rv64a // atomic operations 64 bits
 
 op init ()
 	action = {
 		R[0] = 0;
 	}
 	
+
+
 
 include "nmp/RV32I_alu.nmp"
 include "nmp/RV32I_mem.nmp"
@@ -179,3 +178,12 @@ include "nmp/control.nmp"
 include "nmp/special.nmp"
 include "nmp/RV32F.nmp"
 include "nmp/RV32D.nmp"
+
+// Additionnal files for RV64i
+ include "nmp/RV64I_alu.nmp"
+ include "nmp/RV64I_mem.nmp"
+ include "nmp/RV64M.nmp"
+ include "nmp/RV64A.nmp"
+ include "nmp/RV64F.nmp"
+ include "nmp/RV64D.nmp"
+

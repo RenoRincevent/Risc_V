@@ -1,0 +1,121 @@
+/*
+ *	RISC-V Instruction Set
+ *    "M" Standard Extension for RV32 Integer Multiplication and Division
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// RV32IM Extension: multiplication and division
+op rv32m =
+	  mul
+	| mulh
+	| mulhsu
+	| mulhu
+	| div
+	| divu
+	| rem
+	| remu
+	
+// M standard extension for integer multiplication and division instructions
+
+// doc : rs2=multiplier   rs1 = multiplicand   rd = dest
+// doc : syntaxe  : MUL rdh, rs1, rs2
+// doc : image  xx rs2 rs1 xx rd
+
+// nmp syntaxe : MUL rdh, rs1, rs2     ---> OK
+// image : rs1, rs2, rd                ---> NOK
+// la multiplication etant associative, pas d'importance sauf pour mulhsu (et non mulhus)
+op mul(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mul %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 000 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(int(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		setR(dest, prod<31..0>);
+	} 
+
+op mulh(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulh %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 001 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(int(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		setR(dest, prod<63..32>);
+	} 
+
+op mulhu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulhu %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 011 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: card(64) = coerce(card(64), R[multiplier]) * coerce(card(64), R[multiplicand]);
+		setR(dest, prod<63..32>);
+	}
+	
+	// doc : rs1 signé, rs2 non signé ? ou l'inverse ? A VERIFIER DANS UN SIMULATEUR
+	// nmp action : rs2 signé, rs1 non signé
+op mulhsu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulhsu %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 010 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(card(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		setR(dest, prod<63..32>);
+	} 
+	
+	
+	
+	
+
+op div(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("div %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 100 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then setR(dest, -1); else if R[divisor] == -1 && R[dividend] == 0x8000000
+		then setR(dest, R[dividend]);
+		else setR(dest, R[dividend] / R[divisor]);
+		endif; endif;
+	} 
+
+op divu(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("divu %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 101 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then setR(dest, -1);
+		else setR(dest, coerce(card(32), R[dividend]) / coerce(card(32), R[divisor]));
+		endif;
+	} 
+
+op rem(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("rem %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 110 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then setR(dest, R[dividend]); else if R[divisor] == -1 && R[dividend] == 0x8000000
+		then setR(dest, 0);
+		else setR(dest, R[dividend] % R[divisor]);
+		endif; endif;
+	} 
+
+op remu(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("remu %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 111 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then setR(dest, R[dividend]);
+		else setR(dest, coerce(card(32), R[dividend]) % coerce(card(32), R[divisor]));
+		endif;
+	}

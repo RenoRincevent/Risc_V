@@ -1,0 +1,97 @@
+/*
+ *	RISC-V Instruction Set
+ *    RV64I
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+op rv64i =
+	  addiw
+	| slliw
+	| srliw
+	| sraiw
+	| addw
+	| subw
+	| sllw
+	| srlw
+	| sraw
+	
+
+op addiw(imm: int(12), src: reg_t, dest: reg_t)
+	syntax = format("addiw %s, %s, %l", dest, src, imm)
+	image = format("%12b %s 000 %s 0011011", imm, src, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op slliw(shamt: card(5), src: reg_t, dest: reg_t)
+	syntax = format("slliw %s, %s, %l", dest, src, shamt)
+	image = format("0000000 %5b %s 001 %s 0011011", shamt, src, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op srliw(shamt: card(5), src: reg_t, dest: reg_t)
+	syntax = format("srliw %s, %s, %l", dest, src, shamt)
+	image = format("0000000 %5b %s 101 %s 0011011", shamt, src, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op sraiw(shamt: card(5), src: reg_t, dest: reg_t)
+	syntax = format("sraiw %s, %s, %l", dest, src, shamt)
+	image = format("0100000 %5b %s 101 %s 0011011", shamt, src, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op addw(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sllw %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 000 %s 0111011", src2, src1, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op subw(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sllw %s, %s, %s", dest, src1, src2)
+	image = format("0100000 %s %s 000 %s 0111011", src2, src1, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op sllw(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sllw %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 001 %s 0111011", src2, src1, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op srlw(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("srlw %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 101 %s 0111011", src2, src1, dest)
+	action = {
+		// empty, no simulation
+	}
+
+op sraw(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sraw %s, %s, %s", dest, src1, src2)
+	image = format("0100000 %s %s 101 %s 0111011", src2, src1, dest)
+	action = {
+		// empty, no simulation
+	}

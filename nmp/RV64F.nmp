@@ -1,0 +1,58 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Floating Point Operations
+op rv64f =
+	| fcvt_l_s
+	| fcvt_lu_s
+	| fcvt_s_l
+	| fcvt_s_lu
+
+
+// RV64F extension
+op fcvt_l_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.l.s %s, %s", dest, src) else
+	image = format("1100000 00010 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+op fcvt_lu_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax =  format("fcvt.lu.s %s, %s", dest, src)
+		endif
+	image = format("1100000 00011 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+op fcvt_s_l(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.l %s, %s", dest, src) 
+	image = format("1101000 00010 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}
+
+op fcvt_s_lu(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.lu %s, %s", dest, src)
+	image = format("1101000 00011 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		// empty, no simulation
+	}

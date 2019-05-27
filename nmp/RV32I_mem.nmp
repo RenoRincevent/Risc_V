@@ -1,0 +1,112 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+  
+
+// load instructions
+op all_loads_32 =
+	  lb
+	| lbu
+	| lh
+	| lhu
+	| lw
+	
+// store instructions
+op all_stores_32 =
+	  sb
+	| sh
+	| sw
+
+// load instructions
+op lb(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lb %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = R[base] + offset;
+		setR(dest, M[vAddr]);
+	}
+
+op lbu(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lbu %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = R[base] + offset;
+		setR(dest, coerce(card(32), M[vAddr]));
+	}
+
+op lh(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lh %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		setR(dest, coerce(int(32), M16[vAddr]));
+	}
+
+op lhu(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lhu %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		setR(dest, coerce(duword, M16[vAddr]));
+	}
+
+op lw(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lw %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		let memword = M32[vAddr];
+		setR(dest, memword);
+	}
+	
+
+// store instructions
+op sb(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sb %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 000 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		pAddr = pAddr<31..2> :: (pAddr<1..0> ^ (ReverseEndian :: ReverseEndian));
+		let byte = vAddr<1..0> ^ (BigEndianCPU :: BigEndianCPU);
+		let dataword = R[src];
+		StoreMemoryBYTE(uncached, dataword, pAddr + 8*byte, vAddr);
+	}
+
+op sh(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sh %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 001 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		let halfword = R[src];
+		StoreMemoryHALFWORD(uncached, halfword, pAddr, vAddr);
+	}
+
+op sw(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sw %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 010 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		let dataword = R[src];
+		StoreMemoryWORD(uncached, dataword, pAddr, vAddr);
+	}
+

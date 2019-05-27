@@ -1,0 +1,3061 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+ 
+ // types
+type bit       = card( 1)
+type ubyte     = card( 8)
+type uhalf     = card(16)
+type uword     = card(32)
+type duword    = card(64)
+type byte      = int ( 8)
+type half      = int (16)
+type word      = int (32)
+type dword     = int (64)
+type address   = card(32)
+type index     = card( 5)
+type real      = float(23,9)
+type doublef   = float(52,12)
+
+#line 1 "nmp/config.nmp"
+/*
+ *	MIPS IV Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2016, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+let BigEndianMem	: bool = 1
+let BigEndianCPU	: bool = 1
+let ReverseEndian	: bool = 0
+#line 38 "RV32G.nmp"
+#line 1 "nmp/state.nmp"
+/*
+ *	MIPS IV Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2016, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+
+// state
+mem M   [32,  byte]
+mem M16	[32,  half] alias = M
+mem M32	[32,  word] alias = M
+mem M64	[32,  dword] alias = M
+mem M32F [32, real] alias = M
+mem M32D [32,doublef] alias = M
+
+reg PC  	[ 1, address] is_pc = 1
+reg NPC 	[ 1, address]
+reg R		[32, word]
+reg F		[32, float(23,9)]
+reg D		[32, doublef]
+reg LLbit	[ 1, card(1)]
+reg FCSR	[ 1, word]
+
+
+#line 40 "RV32G.nmp"
+#line 1 "nmp/macros.nmp"
+/*
+ *	MIPS IV Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2016, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// emulation canonicals
+canon "SignalException"(e: word)
+canon "Prefetch"(uncached: bool, pAddr: address, vAddr: address, IorD: bool, hint: card(5))
+canon duword "COP_SD"(z: card(2), rt: card(4))
+canon uword "COP_SW"(z: card(2), rt: card(4))
+canon "SyncOperation"(stype: card(5))
+canon "aquirement"()
+canon "release"()
+canon float(23,9) "rounding"(result: float(23,9), rm: card(3))
+canon "reserve"(memoryWord: int(32))
+canon uword "reserved"(memoryWord: int(32))
+canon float(23,9) "fsqrt32"(src: float(23,9))
+canon float(52,12) "roundingDouble"(result: float(52,12), rm: int(32))
+canon float(52,12) "fsqrt64"(src: float(52,12))
+
+
+// macros
+#line 41 "nmp/macros.nmp"
+#line 43 "nmp/macros.nmp"
+
+// macro NullifyCurrentInstruction() =
+// macro NotWordValue(x) = 0
+// macro UndefinedResult =
+
+let BreakPoint = 0
+let IntegerOverflow = 1
+let AddressError = 2
+let SystemCall = 3
+let Trap = 4
+let InvalidOperation = 5
+
+#line 56 "nmp/macros.nmp"
+
+#line 58 "nmp/macros.nmp"
+#line 59 "nmp/macros.nmp"
+
+// macro CoprocessorOperation(z, cop_fun) =
+// macro COP_LD(z, rt, memdouble) =
+// macro COP_LW(z, rt, memword) =
+// macro COP_SD(z, rt) = "COP_SD"(z, rt)
+// macro COP_SW(z, rt) = "COP_SW"(z, rt)
+
+
+// macro for memory
+
+let INSTRUCTION = 0
+let DATA = 1
+let LOAD = 0
+let STORE = 1
+
+#line 77 "nmp/macros.nmp"
+
+// macro LoadMemoryBYTE(CCA, pAddr, vAddr, IorD) = M[pAddr]
+// macro LoadMemoryHALFWORD(CCA, pAddr, vAddr, IorD) = M16[pAddr]
+// macro LoadMemoryWORD(CCA, pAddr, vAddr, IorD) = M32[pAddr]
+
+#line 83 "nmp/macros.nmp"
+#line 84 "nmp/macros.nmp"
+#line 85 "nmp/macros.nmp"
+// macro StoreMemoryDOUBLEWORD(CCA, MemElem, pAddr, vAddr) = M64[pAddr] = MemElem
+
+#line 88 "nmp/macros.nmp"
+#line 89 "nmp/macros.nmp"
+
+
+//macro for AMOs instructions
+#line 93 "nmp/macros.nmp"
+#line 94 "nmp/macros.nmp"
+#line 95 "nmp/macros.nmp"
+#line 96 "nmp/macros.nmp"
+
+//macro for floating-point operations
+#line 99 "nmp/macros.nmp"
+#line 100 "nmp/macros.nmp"
+
+//
+#line 103 "nmp/macros.nmp"
+#line 104 "nmp/macros.nmp"
+#line 42 "RV32G.nmp"
+
+// GLISS configuration
+let proc = "RV32G"         
+let bit_order = "uppermost"
+let gliss_isize = "32"
+
+
+
+//let bit_image_order =  1
+
+
+// modes
+mode reg_t (r: index) = r
+	num = r
+	syntax =
+		switch ( r ) {
+		case  0:	"zero"
+		case  1:	"ra"
+		case  2: 	"sp"
+		case  3: 	"gp"
+		case  4: 	"tp"
+		case  5: 	"t0"
+		case  6: 	"t1"
+		case  7: 	"t2"
+		case  8:	"fp"
+		case  9:	"s1"
+		case 10:	"a0"
+		case 11:	"a1"
+		case 12:	"a2"
+		case 13:	"a3"
+		case 14:	"a4"
+		case 15:	"a5"
+		case 16:	"a6"
+		case 17:	"a7"
+		case 18:	"s2"
+		case 19:	"s3"
+		case 20:	"s4"
+		case 21:	"s5"
+		case 22:	"s6"
+		case 23:	"s7"
+		case 24:	"s8"
+		case 25:	"s9"
+		case 26:	"s10"
+		case 27:	"s11"
+		case 28:	"t3"
+		case 29:	"t4"
+		case 30:	"t5"
+		case 31:	"t6"
+		}
+	image  = format ( "%5b", r )
+#line 94 "RV32G.nmp"
+
+mode freg_t (f: index) = f
+	num = f
+	syntax =
+		switch ( f ) {
+		case  0:	"f0"
+		case  1:	"f1"
+		case  2: 	"f2"
+		case  3: 	"f3"
+		case  4: 	"f4"
+		case  5: 	"f5"
+		case  6: 	"f6"
+		case  7: 	"f7"
+		case  8:	"f8"
+		case  9:	"f9"
+		case 10:	"f10"
+		case 11:	"f11"
+		case 12:	"f12"
+		case 13:	"f13"
+		case 14:	"f14"
+		case 15:	"f15"
+		case 16:	"f16"
+		case 17:	"f17"
+		case 18:	"f18"
+		case 19:	"f19"
+		case 20:	"f20"
+		case 21:	"f21"
+		case 22:	"f22"
+		case 23:	"f23"
+		case 24:	"f24"
+		case 25:	"f25"
+		case 26:	"f26"
+		case 27:	"f27"
+		case 28:	"f28"
+		case 29:	"f29"
+		case 30:	"f30"
+		case 31:	"f31"
+		}
+	image  = format ( "%5b", f )
+#line 134 "RV32G.nmp"
+#line 135 "RV32G.nmp"
+
+
+mode IMM16(n: half) = n
+	syntax = format("#%d", n)
+	image = format("%16b", n)
+
+mode UIMM16(n: uhalf) = n
+   syntax = format ( "#%d", n )
+   image  = format ( "%16b", n )
+
+
+
+// top-level instructions
+op instruction (x: allinstr)
+	syntax = x.syntax
+	image = x.image
+	action = {
+		NPC = PC + 4;
+		x.action;
+		PC = NPC;
+	}
+
+op allinstr =
+	  all_rrr
+	| all_rri
+	| all_alu
+	| all_branch
+	| all_special
+	| rv32m 	// muldiv 32 bits
+	| all_loads_32
+	| all_stores_32
+	| rv32a // atomic operations 32 bits
+	| rv32f // single floating point 32 bits
+	| rv32d // double floating point 
+	
+
+op init ()
+	action = {
+		R[0] = 0;
+	}
+	
+
+#line 1 "nmp/RV32I_alu.nmp"
+/*
+ *	RISC-V Instruction Set
+ *    RV32I Base Integer Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Integer and Bitwise Register-Register Operations
+op all_rrr =
+	  add 
+	| and
+	| or
+	| sll
+	| slt
+	| sltu
+	| sra
+	| srl
+	| sub
+	| xor
+
+// Integer Register-Immediate Operations
+op all_rri =
+	  addi
+	| andi
+	| ori
+	| slli
+	| slti
+	| sltiu
+	| srai
+	| srli
+	| xori
+
+// other ALU instructions
+op all_alu =
+	  lui
+	| auipc
+
+
+// RV32I Integer Register-Immediate Instructions
+//// ADDI, LI, MV, NOP
+op addi(imm: int(12), src: reg_t, dest: reg_t)
+	syntax =
+		if dest == 0 && src == 0 && imm == 0
+		then "nop" else 
+		if src == 0
+		then format("li %s, %d", dest, imm) else if imm == 0
+		then format("mv %s, %s", dest, src)
+		else format("addi %s, %s, %d", dest, src, imm)
+		endif endif endif
+	image = format("%12b %s 000 %s 0010011", imm, src, dest)
+	action = {	
+		if dest != 0 then R[dest] = R[src] + imm; endif ;
+#line 67 "nmp/RV32I_alu.nmp"
+#line 68 "nmp/RV32I_alu.nmp"
+	}
+	
+//// SLTI
+op slti(imm: int(12), src: reg_t, dest: reg_t)
+	syntax = format("slti %s, %s, %d", dest, src, imm)
+	image = format("%12b %s 010 %s 0010011", imm, src, dest)
+	action = { if dest != 0 then R[dest] = if R[src] < imm then 1 else 0 endif; endif ; }
+#line 74 "nmp/RV32I_alu.nmp"
+#line 75 "nmp/RV32I_alu.nmp"
+	
+//// SLTIU, SEQZ
+op sltiu(imm: int(12), src: reg_t, dest: reg_t)
+	syntax =
+		if imm == 1
+		then format("seqz %s, %s", dest, src)
+		else format("sltiu %s, %s, %d", dest, src, imm)
+		endif
+	image = format("%12b %s 011 %s 0010011", imm, src, dest)	
+	action = { if dest != 0 then R[dest] = if coerce(uword, R[src]) < coerce(uword, imm) then 1 else 0 endif; endif ; }
+#line 84 "nmp/RV32I_alu.nmp"
+#line 85 "nmp/RV32I_alu.nmp"
+
+//// ANDI
+op andi(imm: int(12), src: reg_t, dest: reg_t)
+	syntax = format("andi %s, %s, %d", dest, src, imm)
+	image = format("%12b %s 111 %s 0010011", imm, src, dest)
+	action = {
+		if dest != 0 then R[dest] = R[src] & imm; endif ;
+#line 91 "nmp/RV32I_alu.nmp"
+#line 92 "nmp/RV32I_alu.nmp"
+	}
+	
+//// ORI
+op ori(imm: int(12), src: reg_t, dest: reg_t)
+	syntax = format("ori %s, %s, %d", dest, src, imm)
+	image = format("%12b %s 110 %s 0010011", imm, src, dest)
+	action = {	
+		if dest != 0 then R[dest] = R[src] | imm; endif ;
+#line 99 "nmp/RV32I_alu.nmp"
+#line 100 "nmp/RV32I_alu.nmp"
+	}
+
+//// XORI, NOT
+op xori(imm: int(12), src: reg_t, dest: reg_t)
+	syntax =
+		if imm == -1
+		then format("not %s, %s", dest, src)
+		else format("xori %s, %s, %d", dest, src, imm)
+		endif
+	image = format("%12b %s 100 %s 0010011", imm, src, dest)
+	action = {	
+		if dest != 0 then R[dest] = R[src] ^ imm; endif ;
+#line 111 "nmp/RV32I_alu.nmp"
+#line 112 "nmp/RV32I_alu.nmp"
+	}
+	
+//// LUI	
+op lui(immediate: int(20), dest: reg_t)
+	syntax = format("lui %s, %d", dest, immediate)
+	image  = format("%20b %s 0110111", immediate, dest)
+	action = { if dest != 0 then R[dest] = coerce(word, immediate) << 12; endif ; }
+#line 118 "nmp/RV32I_alu.nmp"
+#line 119 "nmp/RV32I_alu.nmp"
+	
+//// SLLI	
+op slli(shamt: card(6), src: reg_t, dest: reg_t)
+	syntax = format("slli %s, %s, %d", dest, src, shamt)
+	image  = format("000000 %6b %s 001 %s 0010011", shamt, src, dest)
+	action = {
+		R[dest] = R[src] << shamt;
+	}
+	
+//// SRLI	
+op srli(shamt: card(6), src: reg_t, dest: reg_t)
+	syntax = format("srli %s, %s, %d", dest, src, shamt)
+	image  = format("000000 %6b %s 101 %s 0010011", shamt, src, dest)
+	action = {
+		R[dest] = coerce(uword, R[src]) >> shamt;
+	}
+
+//// SRAI		
+op srai(shamt: card(6), src: reg_t, dest: reg_t)
+	syntax = format("srai %s, %s, %d", dest, src, shamt)
+	image  = format("010000 %6b %s 101 %s 0010011", shamt, src, dest)
+	action = {
+		R[dest] = coerce(word, R[src]) >> shamt;
+	}
+
+//// AUIPC		
+op auipc(immediate: int(20), dest: reg_t)
+	syntax = format("auipc %s, %d", dest, immediate)
+	image  = format("%20b %s 0010111", immediate, dest)
+	action = { 
+		if dest != 0 then R[dest] = __IADDR + (coerce(word, immediate) << 12); endif ; 
+#line 149 "nmp/RV32I_alu.nmp"
+#line 150 "nmp/RV32I_alu.nmp"
+	}
+
+// RV32I Integer Register-Register Operations
+
+//// ADD	
+op add(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("add %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 000 %s 0110011", src2, src1, dest)
+	action = {	
+		if dest != 0 then R[dest] = R[src1] + R[src2]; endif ;
+#line 159 "nmp/RV32I_alu.nmp"
+#line 160 "nmp/RV32I_alu.nmp"
+}
+
+//// SLT, SLTZ, SGTZ
+op slt(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = 
+		if src2 == 0
+		then format("sltz %s, %s", dest, src1) else if src1 == 0
+		then format("sgtz %s, %s", dest, src2)
+		else format("slt %s, %s, %s", dest, src1, src2)
+		endif endif
+	image = format("0000000 %s %s 010 %s 0110011", src2, src1, dest)
+	action = { if dest != 0 then R[dest] = if R[src1] < R[src2] then 1 else 0 endif; endif ; }
+#line 171 "nmp/RV32I_alu.nmp"
+#line 172 "nmp/RV32I_alu.nmp"
+
+//// SLTU, SNEZ
+op sltu(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax =
+		if src1 == 0
+		then format("snez %s, %s", dest, src2)
+		else format("sltu %s, %s, %s", dest, src1, src2)
+		endif
+	image = format("0000000 %s %s 011 %s 0110011", src2, src1, dest)
+	action = { if dest != 0 then R[dest] = if coerce(uword, R[src1]) < coerce(uword, R[src2]) then 1 else 0 endif; endif ; }
+#line 181 "nmp/RV32I_alu.nmp"
+#line 182 "nmp/RV32I_alu.nmp"
+	
+//// AND	
+op and(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("and %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 111 %s 0110011", src2, src1, dest)
+	action = {
+		if dest != 0 then R[dest] = R[src1] & R[src2]; endif ;
+#line 188 "nmp/RV32I_alu.nmp"
+#line 189 "nmp/RV32I_alu.nmp"
+	}
+	
+//// OR	
+op or(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("or %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 110 %s 0110011", src2, src1, dest)
+	action = {
+		if dest != 0 then R[dest] = R[src1] | R[src2]; endif ;
+#line 196 "nmp/RV32I_alu.nmp"
+#line 197 "nmp/RV32I_alu.nmp"
+	}
+
+//// XOR	
+op xor(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("xor %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 100 %s 0110011", src2, src1, dest)
+	action = {
+		if dest != 0 then R[dest] = R[src1] ^ R[src2]; endif ;
+#line 204 "nmp/RV32I_alu.nmp"
+#line 205 "nmp/RV32I_alu.nmp"
+	}	
+	
+//// SLL
+op sll(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sll %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 001 %s 0110011", src2, src1, dest)
+	action = {
+		let s = src2<4..0>;
+		let temp = R[src1] << s;
+		R[dest] = temp;
+	}
+	
+//// SRL
+op srl(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("srl %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s 101 %s 0110011", src2, src1, dest)
+	action = {
+		let s = src2<4..0>;
+		let temp = coerce(uword, R[src1]) >> s;
+		R[dest] = temp;
+	}
+
+//// SUB, NEG	
+op sub(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax =
+		if src1 == 0
+		then format("neg %s, %s", dest, src2)
+		else format("sub %s, %s, %s", dest, src1, src2)
+		endif
+	image = format("0100000 %s %s 000 %s 0110011", src2, src1, dest)
+	action = {
+		if dest != 0 then R[dest] = R[src1] - R[src2]; endif ;
+#line 236 "nmp/RV32I_alu.nmp"
+#line 237 "nmp/RV32I_alu.nmp"
+	}
+	
+//// SRA	
+op sra(src2: reg_t, src1: reg_t, dest: reg_t)
+	syntax = format("sra %s, %s, %s", dest, src1, src2)
+	image = format("0100000 %s %s 101 %s 0110011", src2, src1, dest)
+	action = {
+		let s = src2<4..0>;
+		let temp = coerce(word, R[src1]) >> s;
+		R[dest] = temp;
+	}
+#line 178 "RV32G.nmp"
+#line 1 "nmp/RV32I_mem.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+  
+
+// load instructions
+op all_loads_32 =
+	  lb
+	| lbu
+	| lh
+	| lhu
+	| lw
+	
+// store instructions
+op all_stores_32 =
+	  sb
+	| sh
+	| sw
+
+// load instructions
+op lb(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lb %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = R[base] + offset;
+		if dest != 0 then R[dest] = M[vAddr]; endif ;
+#line 43 "nmp/RV32I_mem.nmp"
+#line 44 "nmp/RV32I_mem.nmp"
+	}
+
+op lbu(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lbu %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = R[base] + offset;
+		if dest != 0 then R[dest] = coerce(card(32), M[vAddr]); endif ;
+#line 51 "nmp/RV32I_mem.nmp"
+#line 52 "nmp/RV32I_mem.nmp"
+	}
+
+op lh(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lh %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		if dest != 0 then R[dest] = coerce(int(32), M16[vAddr]); endif ;
+#line 59 "nmp/RV32I_mem.nmp"
+#line 60 "nmp/RV32I_mem.nmp"
+	}
+
+op lhu(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lhu %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		if dest != 0 then R[dest] = coerce(duword, M16[vAddr]); endif ;
+#line 67 "nmp/RV32I_mem.nmp"
+#line 68 "nmp/RV32I_mem.nmp"
+	}
+
+op lw(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lw %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		let memword = M32[vAddr];
+		if dest != 0 then R[dest] = memword; endif ;
+#line 76 "nmp/RV32I_mem.nmp"
+#line 77 "nmp/RV32I_mem.nmp"
+	}
+	
+
+// store instructions
+op sb(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sb %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 000 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+			let  uncached = 0; 
+#line 86 "nmp/RV32I_mem.nmp"
+	let pAddr =  vAddr;
+#line 86 "nmp/RV32I_mem.nmp"
+#line 87 "nmp/RV32I_mem.nmp"
+		pAddr = pAddr<31..2> :: (pAddr<1..0> ^ (ReverseEndian :: ReverseEndian));
+		let byte = vAddr<1..0> ^ (BigEndianCPU :: BigEndianCPU);
+		let dataword = R[src];
+		M[ pAddr + 8*byte] =  dataword;
+#line 90 "nmp/RV32I_mem.nmp"
+#line 91 "nmp/RV32I_mem.nmp"
+	}
+
+op sh(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sh %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 001 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+			let  uncached = 0; 
+#line 98 "nmp/RV32I_mem.nmp"
+	let pAddr =  vAddr;
+#line 98 "nmp/RV32I_mem.nmp"
+#line 99 "nmp/RV32I_mem.nmp"
+		let halfword = R[src];
+		M16[ pAddr] =  halfword;
+#line 100 "nmp/RV32I_mem.nmp"
+#line 101 "nmp/RV32I_mem.nmp"
+	}
+
+op sw(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sw %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 010 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+			let  uncached = 0; 
+#line 108 "nmp/RV32I_mem.nmp"
+	let pAddr =  vAddr;
+#line 108 "nmp/RV32I_mem.nmp"
+#line 109 "nmp/RV32I_mem.nmp"
+		let dataword = R[src];
+		M32[ pAddr] =  dataword;
+#line 110 "nmp/RV32I_mem.nmp"
+#line 111 "nmp/RV32I_mem.nmp"
+	}
+
+#line 180 "RV32G.nmp"
+#line 1 "nmp/RV32A.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+// 32-bit atomic instructions
+op rv32a =
+	  lr_w
+	| sc_w
+	| amoswap_w
+	| amoadd_w
+	| amoxor_w
+	| amoand_w
+	| amoor_w
+	| amomin_w
+	| amomax_w
+	| amominu_w
+	| amomaxu_w
+
+
+// addr = rs1, dest = rd
+//pour lr et sc : aq et rl sont set
+// TODO que faire de aq et rl pour lr_w et sc_w
+op lr_w(aq: bool, rl: bool, addr: reg_t,dest: reg_t)
+	syntax = format("lr.w %s, (%s)", dest, addr) 
+	image  = format("00010 %1b %1b 00000 %s 010 %s 0101111", aq, rl, addr, dest)
+	action = {
+		let vAddr = R[addr];
+		if dest != 0 then R[dest] = M32[vAddr]; endif ;
+#line 46 "nmp/RV32A.nmp"
+#line 47 "nmp/RV32A.nmp"
+		"reserve"(M32[vAddr]);
+#line 47 "nmp/RV32A.nmp"
+#line 48 "nmp/RV32A.nmp"
+	}
+
+// src= rs2, addr=rs1, dest=rd
+op sc_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("sc.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00011 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		let value = R[src];
+		let vAddr = R[addr];
+			let  uncached = 0; 
+#line 57 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;
+#line 57 "nmp/RV32A.nmp"
+#line 58 "nmp/RV32A.nmp"
+		if("reserved"(M32[vAddr])) then
+#line 58 "nmp/RV32A.nmp"
+#line 59 "nmp/RV32A.nmp"
+			M32[ pAddr] =  value;
+#line 59 "nmp/RV32A.nmp"
+#line 60 "nmp/RV32A.nmp"
+			if dest != 0 then R[dest] = 0; endif ; //store succeed
+#line 60 "nmp/RV32A.nmp"
+#line 61 "nmp/RV32A.nmp"
+		else 
+			if dest != 0 then R[dest] = 1; endif ; //store fail
+#line 62 "nmp/RV32A.nmp"
+#line 63 "nmp/RV32A.nmp"
+					//failure code of 1 to mean “unspecified”. 
+					//More specific failure codes might be defined in future versions or extensions to the ISA.
+		endif;
+	}
+
+// src= rs2, addr=rs1, dest=rd
+op amoswap_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoswap.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00001 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 73 "nmp/RV32A.nmp"
+#line 74 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 74 "nmp/RV32A.nmp"
+#line 75 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// set memory word t to R[rs2]
+			let  uncached = 0; 
+#line 79 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 79 "nmp/RV32A.nmp"
+#line 80 "nmp/RV32A.nmp"
+		let result = R[src];
+		M32[ pAddr] =  result;	
+#line 81 "nmp/RV32A.nmp"
+#line 82 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 83 "nmp/RV32A.nmp"
+#line 84 "nmp/RV32A.nmp"
+	}
+
+op amoadd_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoadd.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 90 "nmp/RV32A.nmp"
+#line 91 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 91 "nmp/RV32A.nmp"
+#line 92 "nmp/RV32A.nmp"
+
+		let vAddr = R[addr];		// address in R[rs1]
+		let t = M32[vAddr];		// t : memory word at address vAddr
+		
+		// memory word t take the value t + R[rs2]
+			let  uncached = 0; 
+#line 97 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 97 "nmp/RV32A.nmp"
+#line 98 "nmp/RV32A.nmp"
+		let result = t + R[src];
+		M32[ pAddr] =  result;	
+#line 99 "nmp/RV32A.nmp"
+#line 100 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;			// set rd to the sign extension of t
+#line 101 "nmp/RV32A.nmp"
+#line 102 "nmp/RV32A.nmp"
+	}
+
+op amoxor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoxor.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("00100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 108 "nmp/RV32A.nmp"
+#line 109 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 109 "nmp/RV32A.nmp"
+#line 110 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t ^ R[rs2])
+			let  uncached = 0; 
+#line 114 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 114 "nmp/RV32A.nmp"
+#line 115 "nmp/RV32A.nmp"
+		let result = t ^ R[src];
+		M32[ pAddr] =  result;	
+#line 116 "nmp/RV32A.nmp"
+#line 117 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 118 "nmp/RV32A.nmp"
+#line 119 "nmp/RV32A.nmp"
+	}
+
+op amoand_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amoand.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("01100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 125 "nmp/RV32A.nmp"
+#line 126 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 126 "nmp/RV32A.nmp"
+#line 127 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t & R[rs2])
+			let  uncached = 0; 
+#line 131 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 131 "nmp/RV32A.nmp"
+#line 132 "nmp/RV32A.nmp"
+		let result = t & R[src];
+		M32[ pAddr] =  result;	
+#line 133 "nmp/RV32A.nmp"
+#line 134 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 135 "nmp/RV32A.nmp"
+#line 136 "nmp/RV32A.nmp"
+	}
+
+op amoor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t,  dest: reg_t)
+	syntax = format("amoor.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("01000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 142 "nmp/RV32A.nmp"
+#line 143 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 143 "nmp/RV32A.nmp"
+#line 144 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t | R[rs2])
+			let  uncached = 0; 
+#line 148 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 148 "nmp/RV32A.nmp"
+#line 149 "nmp/RV32A.nmp"
+		let result = t | R[src];
+		M32[ pAddr] =  result;	
+#line 150 "nmp/RV32A.nmp"
+#line 151 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 152 "nmp/RV32A.nmp"
+#line 153 "nmp/RV32A.nmp"
+	}
+
+op amomin_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomin.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("10000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 159 "nmp/RV32A.nmp"
+#line 160 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 160 "nmp/RV32A.nmp"
+#line 161 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t MIN R[rs2])
+			let  uncached = 0; 
+#line 165 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;
+#line 165 "nmp/RV32A.nmp"
+#line 166 "nmp/RV32A.nmp"
+		
+		let condition = t < R[src];
+		if condition then
+			let result = t;
+		else				//Dans les ref: utilisation du complément à deux pour chercher le min
+			let result = R[src];
+		endif;
+		  	
+		M32[ pAddr] =  result;	
+#line 174 "nmp/RV32A.nmp"
+#line 175 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 176 "nmp/RV32A.nmp"
+#line 177 "nmp/RV32A.nmp"
+	}
+
+op amomax_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomax.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("10100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 183 "nmp/RV32A.nmp"
+#line 184 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 184 "nmp/RV32A.nmp"
+#line 185 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];		
+
+		// memory word t take the value (t MAX R[rs2])
+			let  uncached = 0; 
+#line 189 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 189 "nmp/RV32A.nmp"
+#line 190 "nmp/RV32A.nmp"
+		
+		let condition = t > R[src];
+		if condition then
+			let result = t;
+		else				//Dans les ref: utilisation du complément à deux pour chercher le max
+			let result = R[src];
+		endif;
+
+		M32[ pAddr] =  result;	
+#line 198 "nmp/RV32A.nmp"
+#line 199 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 200 "nmp/RV32A.nmp"
+#line 201 "nmp/RV32A.nmp"
+	}
+
+op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amominu.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("11000 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 207 "nmp/RV32A.nmp"
+#line 208 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 208 "nmp/RV32A.nmp"
+#line 209 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];	
+
+		let tu = coerce(card(32),t);
+		let valSrcU = coerce(card(32),R[src]);	
+
+			let  uncached = 0; 
+#line 215 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 215 "nmp/RV32A.nmp"
+#line 216 "nmp/RV32A.nmp"
+		
+		let condition = tu < valSrcU;
+		if condition then
+			let result = tu;
+		else				
+			let result = valSrcU;
+		endif; 
+
+		M32[ pAddr] =  result;	
+#line 224 "nmp/RV32A.nmp"
+#line 225 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 226 "nmp/RV32A.nmp"
+#line 227 "nmp/RV32A.nmp"
+	}
+
+op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
+	syntax = format("amomaxu.w %s, %s, (%s)", dest, src, addr) 
+	image  = format("11100 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
+	action = {
+		if aq then "aquirement"(); endif;
+#line 233 "nmp/RV32A.nmp"
+#line 234 "nmp/RV32A.nmp"
+		if rl then "release"(); endif;
+#line 234 "nmp/RV32A.nmp"
+#line 235 "nmp/RV32A.nmp"
+		let vAddr = R[addr];
+		let t = M32[vAddr];	
+
+		let tu = coerce(card(32),t);
+		let valSrcU = coerce(card(32),R[src]);	
+
+			let  uncached = 0; 
+#line 241 "nmp/RV32A.nmp"
+	let pAddr =  vAddr;		
+#line 241 "nmp/RV32A.nmp"
+#line 242 "nmp/RV32A.nmp"
+		
+		let condition = tu > valSrcU;
+		if condition then
+			let result = tu;
+		else				
+			let result = valSrcU;
+		endif;
+   
+		M32[ pAddr] =  result;	
+#line 250 "nmp/RV32A.nmp"
+#line 251 "nmp/RV32A.nmp"
+		
+		if dest != 0 then R[dest] = t; endif ;
+#line 252 "nmp/RV32A.nmp"
+#line 253 "nmp/RV32A.nmp"
+	}
+#line 182 "RV32G.nmp"
+#line 1 "nmp/RV32M.nmp"
+/*
+ *	RISC-V Instruction Set
+ *    "M" Standard Extension for RV32 Integer Multiplication and Division
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// RV32IM Extension: multiplication and division
+op rv32m =
+	  mul
+	| mulh
+	| mulhsu
+	| mulhu
+	| div
+	| divu
+	| rem
+	| remu
+	
+// M standard extension for integer multiplication and division instructions
+
+// doc : rs2=multiplier   rs1 = multiplicand   rd = dest
+// doc : syntaxe  : MUL rdh, rs1, rs2
+// doc : image  xx rs2 rs1 xx rd
+
+// nmp syntaxe : MUL rdh, rs1, rs2     ---> OK
+// image : rs1, rs2, rd                ---> NOK
+// la multiplication etant associative, pas d'importance sauf pour mulhsu (et non mulhus)
+op mul(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mul %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 000 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(int(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		if dest != 0 then R[dest] = prod<31..0>; endif ;
+#line 48 "nmp/RV32M.nmp"
+#line 49 "nmp/RV32M.nmp"
+	} 
+
+op mulh(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulh %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 001 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(int(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		if dest != 0 then R[dest] = prod<63..32>; endif ;
+#line 56 "nmp/RV32M.nmp"
+#line 57 "nmp/RV32M.nmp"
+	} 
+
+op mulhu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulhu %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 011 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: card(64) = coerce(card(64), R[multiplier]) * coerce(card(64), R[multiplicand]);
+		if dest != 0 then R[dest] = prod<63..32>; endif ;
+#line 64 "nmp/RV32M.nmp"
+#line 65 "nmp/RV32M.nmp"
+	}
+	
+	// doc : rs1 signé, rs2 non signé ? ou l'inverse ? A VERIFIER DANS UN SIMULATEUR
+	// nmp action : rs2 signé, rs1 non signé
+op mulhsu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
+	syntax = format("mulhsu %s, %s, %s", dest, multiplicand, multiplier)
+	image = format("0000001 %s %s 010 %s 0110011", multiplier, multiplicand, dest)
+	action = {
+		let prod: int(64) = coerce(card(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		if dest != 0 then R[dest] = prod<63..32>; endif ;
+#line 74 "nmp/RV32M.nmp"
+#line 75 "nmp/RV32M.nmp"
+	} 
+	
+	
+	
+	
+
+op div(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("div %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 100 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then if dest != 0 then R[dest] = -1; endif ; else if R[divisor] == -1 && R[dividend] == 0x8000000
+#line 86 "nmp/RV32M.nmp"
+#line 87 "nmp/RV32M.nmp"
+		then if dest != 0 then R[dest] = R[dividend]; endif ;
+#line 87 "nmp/RV32M.nmp"
+#line 88 "nmp/RV32M.nmp"
+		else if dest != 0 then R[dest] = R[dividend] / R[divisor]; endif ;
+#line 88 "nmp/RV32M.nmp"
+#line 89 "nmp/RV32M.nmp"
+		endif; endif;
+	} 
+
+op divu(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("divu %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 101 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then if dest != 0 then R[dest] = -1; endif ;
+#line 97 "nmp/RV32M.nmp"
+#line 98 "nmp/RV32M.nmp"
+		else if dest != 0 then R[dest] = coerce(card(32), R[dividend]) / coerce(card(32), R[divisor]); endif ;
+#line 98 "nmp/RV32M.nmp"
+#line 99 "nmp/RV32M.nmp"
+		endif;
+	} 
+
+op rem(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("rem %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 110 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then if dest != 0 then R[dest] = R[dividend]; endif ; else if R[divisor] == -1 && R[dividend] == 0x8000000
+#line 107 "nmp/RV32M.nmp"
+#line 108 "nmp/RV32M.nmp"
+		then if dest != 0 then R[dest] = 0; endif ;
+#line 108 "nmp/RV32M.nmp"
+#line 109 "nmp/RV32M.nmp"
+		else if dest != 0 then R[dest] = R[dividend] % R[divisor]; endif ;
+#line 109 "nmp/RV32M.nmp"
+#line 110 "nmp/RV32M.nmp"
+		endif; endif;
+	} 
+
+op remu(divisor: reg_t, dividend: reg_t, dest: reg_t)
+	syntax = format("remu %s, %s, %s", dest, dividend, divisor)
+	image = format("0000001 %s %s 111 %s 0110011", divisor, dividend, dest)
+	action = {
+		if R[divisor] == 0
+		then if dest != 0 then R[dest] = R[dividend]; endif ;
+#line 118 "nmp/RV32M.nmp"
+#line 119 "nmp/RV32M.nmp"
+		else if dest != 0 then R[dest] = coerce(card(32), R[dividend]) % coerce(card(32), R[divisor]); endif ;
+#line 119 "nmp/RV32M.nmp"
+#line 120 "nmp/RV32M.nmp"
+		endif;
+	}
+#line 184 "RV32G.nmp"
+#line 1 "nmp/control.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// branches
+op all_branch = 
+	  beq
+	| bge
+	| bgeu
+	| blt
+	| bltu
+	| bne
+	| jal
+	| jalr
+
+
+// Jumps
+//// JAL, J
+op jal(offset: int(20), dest: reg_t)
+	tgt_offset = coerce(int(32), offset :: 0<0..0>)
+	syntax = 
+		if dest == 0
+		then format("j %l", __IADDR + tgt_offset)
+		else if dest == 1
+		then format("jal %l", __IADDR + tgt_offset)
+		else format("jal %s, %l", dest, __IADDR + tgt_offset)
+		endif endif
+	image = format("%1b %10b %1b %8b %s 1101111", offset<19..19>, offset<9..0>, offset<10..10>, offset<18..11>, dest)
+	action = {
+		if dest != 0 then R[dest] = PC + 4; endif;
+		NPC = NPC + tgt_offset;
+	}
+
+//// JALR, JR, RET
+op jalr(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = 
+		if dest == 1
+		then format("jalr %s", base)
+		else if dest == 0 && offset == 0 && base == 1
+		then "ret"
+		else if dest == 0 && offset == 0 && base != 1
+		then format("jr %s", base)
+		else format("jalr %s, %s, %l", dest, base, __IADDR + coerce(int(32), offset))
+		endif endif endif
+	image = format("%12b %s 000 %s 1100111", offset, base, dest)
+	action = {
+		if dest != 0 then R[dest] = PC + 4; endif;
+		let tgt_offset = coerce(int(32), offset);
+		NPC = NPC + tgt_offset + R[base];
+	}
+
+
+
+// branch instructions
+//// BEQ, BEQZ
+op beq(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax =
+		if src1 == 0
+		then format("beqz %s, %l", src2, __IADDR + tgt_offset)
+		else if src2 == 0
+		then format("beqz %s, %l", src1, __IADDR + tgt_offset)
+		else format("beq %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+		endif endif
+	image = format("%1b %6b %s %s 000 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = R[src1] == R[src2];
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+//// BNE, BNEZ
+op bne(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax =
+		if src1 == 0
+		then format("bnez %s, %l", src2, __IADDR + tgt_offset)
+		else if src2 == 0
+		then format("bnez %s, %l", src1, __IADDR + tgt_offset)
+		else format("bne %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+		endif endif
+	image = format("%1b %6b %s %s 001 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = R[src1] != R[src2];
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+//// BLT, BLTZ, BGTZ
+op blt(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax =
+		if src1 == 0
+		then format("bltz %s, %l", src2, __IADDR + tgt_offset)
+		else if src2 == 0
+		then format("bgtz %s, %l", src1, __IADDR + tgt_offset)
+		else format("blt %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+		endif endif
+	image = format("%1b %6b %s %s 100 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = R[src1] < R[src2];
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+//// BLTU
+op bltu(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax = format("bltu %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+	image = format("%1b %6b %s %s 110 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = coerce(card(32), R[src1]) < coerce(card(32), R[src2]);
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+//// BGE, BGEZ
+op bge(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax =
+		if src1 == 0
+		then format("bgez %s, %l", src2, __IADDR + tgt_offset)
+		else if src2 == 0
+		then format("bgez %s, %l", src1, __IADDR + tgt_offset)
+		else format("bge %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+		endif endif
+	image = format("%1b %6b %s %s 101 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = R[src1] >= R[src2];
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+//// BGEU
+op bgeu(src2: reg_t, src1: reg_t, offset: int(12))
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax =
+		format("bgeu %s, %s, %l", src1, src2, __IADDR + tgt_offset)
+	image = format("%1b %6b %s %s 111 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
+	action = {
+		let condition = coerce(card(32), R[src1]) >= coerce(card(32), R[src2]);
+		if condition then
+			NPC = NPC + tgt_offset;
+		endif;
+	}
+
+#line 186 "RV32G.nmp"
+#line 1 "nmp/special.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+op all_special =
+	  fence
+	| csrrw
+	| csrrs
+	| csrrc
+	| csrrwi
+	| csrrsi
+	| csrrci
+	| ecall
+	| ebreak
+
+// special instruction
+// several values are currently ignored -> they are reserved for finer-grain fences in future extensions of RISC-V ISA
+op fence(predecessor: card(4), successor: card(4), ignore1: card(4), ignore2: reg_t, fencetype: card(3), ignore3: reg_t)
+	syntax = if fencetype == 1 then "fence.i" else format("fence %4b, %4b", predecessor, successor) endif
+	image  = format("%4b %4b %4b %5b %3b %5b 0001111", ignore1, predecessor, successor, ignore2, fencetype, ignore3)
+	action = {
+		"SyncOperation"(0);
+#line 39 "nmp/special.nmp"
+#line 40 "nmp/special.nmp"
+	}
+
+// because syscalls and csr instructions share same opcode, they are all encoded here
+// at the csr instructions, only rough differentiation between csr and csri
+
+op csrrw(srcdest: card(12), source: reg_t, dest: reg_t) 
+	syntax = format("csrrw %s, %d, %s", dest, srcdest, source)
+	image  = format("%12b %s 001 %s 1110011", srcdest, source, dest)
+	action = {
+		"SignalException"(Trap);
+#line 49 "nmp/special.nmp"
+#line 50 "nmp/special.nmp"
+	}
+
+op csrrs(srcdest: card(12), source: reg_t, dest: reg_t) 
+	syntax = format("csrrs %s, %d, %s", dest, srcdest, source)
+	image  = format("%12b %s 010 %s 1110011", srcdest, source, dest)
+	action = {
+		"SignalException"(Trap);
+#line 56 "nmp/special.nmp"
+#line 57 "nmp/special.nmp"
+	}
+
+op csrrc(srcdest: card(12), source: reg_t, dest: reg_t) 
+	syntax = format("csrrc %s, %d, %s", dest, srcdest, source)
+	image  = format("%12b %s 011 %s 1110011", srcdest, source, dest)
+	action = {
+		"SignalException"(Trap);
+#line 63 "nmp/special.nmp"
+#line 64 "nmp/special.nmp"
+	}
+
+op csrrwi(srcdest: card(12), zimm: card(5), dest: reg_t) 
+	syntax = format("csrrwi %s, %d, %d", dest, srcdest, zimm)
+	image  = format("%12b %5b 101 %s 1110011", srcdest, zimm, dest)
+	action = {
+		"SignalException"(Trap);
+#line 70 "nmp/special.nmp"
+#line 71 "nmp/special.nmp"
+	}
+
+op csrrsi(srcdest: card(12), zimm: card(5), dest: reg_t) 
+	syntax = format("csrrsi %s, %d, %d", dest, srcdest, zimm)
+	image  = format("%12b %5b 110 %s 1110011", srcdest, zimm, dest)
+	action = {
+		"SignalException"(Trap);
+#line 77 "nmp/special.nmp"
+#line 78 "nmp/special.nmp"
+	}
+
+op csrrci(srcdest: card(12), zimm: card(5), dest: reg_t) 
+	syntax = format("csrrci %s, %d, %d", dest, srcdest, zimm)
+	image  = format("%12b %5b 111 %s 1110011", srcdest, zimm, dest)
+	action = {
+		"SignalException"(Trap);
+#line 84 "nmp/special.nmp"
+#line 85 "nmp/special.nmp"
+	}
+	
+	op ecall() 
+	syntax = "ecall"
+	image  = "000000000000 00000 000 00000 1110011"
+	action = {
+		"SignalException"(SystemCall); 
+#line 91 "nmp/special.nmp"
+#line 92 "nmp/special.nmp"
+	}
+
+op ebreak() 
+	syntax = "ebreak"
+	image  = "000000000001 00000 000 00000 1110011"
+	action = {
+		"SignalException"(BreakPoint); 
+#line 98 "nmp/special.nmp"
+#line 99 "nmp/special.nmp"
+	}
+
+#line 188 "RV32G.nmp"
+#line 1 "nmp/RV32F.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Floating Point Operations
+op rv32f =
+	  flw
+	| fsw
+	| fmuladd_s
+	| fmulsub_s
+	| fnegmuladd_s
+	| fnegmulsub_s
+	| fadd_s
+	| fsub_s
+	| fmul_s
+	| fdiv_s
+	| fsqrt_s
+	| fsgnj_s 
+	| fsgnjn_s 
+	| fsgnjx_s 
+	| fmin_s
+	| fmax_s
+	| fcvt_w_s
+	| fcvt_wu_s
+	| fcvt_s_w
+	| fcvt_s_wu
+	| fmv_w_x
+	| fmv_x_w
+	| fle_s
+	| flt_s
+	| feq_s
+	| fclass_s
+
+
+// load and store
+// --------------
+//    FLW
+op flw(offset: int(12), base: reg_t, dest: freg_t)
+	syntax = format("flw %s, %d(%s)", dest, offset, base)
+	image = format("%12b %s 010 %s 0000111", offset, base, dest)
+	action = {	
+		let vAddr = offset + R[base];
+		let memword = M32F[vAddr];
+		if dest != 0 then F[dest] = memword; endif  ;
+#line 61 "nmp/RV32F.nmp"
+#line 62 "nmp/RV32F.nmp"
+	}
+
+//    FSW 
+// src = rs2, base = rs1
+op fsw(offset: int(12), src: freg_t, base: reg_t)
+	syntax = format("fsw %s, %d(%s)", src, offset, base)
+	image = format("%7b %s %s 010 %5b 0100111", offset<11..5>, src, base, offset<4..0>)
+	action = {	
+		let vAddr = offset + R[base];
+			let  uncached = 0; 
+#line 71 "nmp/RV32F.nmp"
+	let pAddr =  vAddr;
+#line 71 "nmp/RV32F.nmp"
+#line 72 "nmp/RV32F.nmp"
+		let dataword = F[src];
+		M32F[ pAddr] =  dataword;
+#line 73 "nmp/RV32F.nmp"
+#line 74 "nmp/RV32F.nmp"
+	}
+
+// fused multiply add/sub
+// rm : rounding mode
+// RNE (000)= Round to Nearest, ties to Even
+// RTZ (001)= Round towards Zero
+// RDN (010)= Round Down (towards -infinite)
+// RUP (011)= Round Up (towards +infinite)
+// RMM (100)= Round to Nearest, ties to Max Magnitude
+// (101) = Invalid, Reserved for future use
+// (110) = Invalid, Reserved for future use
+// (111) = TODO selects dynamic rounding mode ? in frm -> fcsr<7..5> (fcsr : floating-point control and status register)
+// ----------------------
+//   FMADD.S :
+op fmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
+	action = {
+		let r1 = F[src1]; //reg F[32, float(23,9)]
+		let r2 = F[src2];
+		let r3 = F[src3];
+		let roundingMod = rm;
+
+		//raise the invalid operation exception when the multiplicands are infinite and zero
+		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);			
+#line 100 "nmp/RV32F.nmp"
+#line 101 "nmp/RV32F.nmp"
+		else
+			let result = r1*r2+r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "rounding"(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
+#line 106 "nmp/RV32F.nmp"
+#line 107 "nmp/RV32F.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ; 
+#line 107 "nmp/RV32F.nmp"
+#line 108 "nmp/RV32F.nmp"
+		endif;
+		
+	}
+
+//   FMSUB.S
+op fmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		let roundingMod = rm;
+
+		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;			
+			"SignalException"(InvalidOperation);
+#line 124 "nmp/RV32F.nmp"
+#line 125 "nmp/RV32F.nmp"
+		else
+			let result = r1*r2-r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "rounding"(result,roundingMod); 
+#line 130 "nmp/RV32F.nmp"
+#line 131 "nmp/RV32F.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ;
+#line 131 "nmp/RV32F.nmp"
+#line 132 "nmp/RV32F.nmp"
+		endif;
+	}
+
+//   FNMADD.S
+op fnegmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		let roundingMod = rm;
+
+		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;	
+			"SignalException"(InvalidOperation);
+#line 147 "nmp/RV32F.nmp"
+#line 148 "nmp/RV32F.nmp"
+		else
+			let result = -r1*r2-r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "rounding"(result,roundingMod); 
+#line 153 "nmp/RV32F.nmp"
+#line 154 "nmp/RV32F.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ;
+#line 154 "nmp/RV32F.nmp"
+#line 155 "nmp/RV32F.nmp"
+		endif;
+	}
+
+//   FNMSUB.S
+op fnegmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 00 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
+	action = {
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
+		let roundingMod = rm;
+		
+		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);
+#line 170 "nmp/RV32F.nmp"
+#line 171 "nmp/RV32F.nmp"
+		else
+			let result = -r1*r2+r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "rounding"(result,roundingMod); 
+#line 176 "nmp/RV32F.nmp"
+#line 177 "nmp/RV32F.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ;
+#line 177 "nmp/RV32F.nmp"
+#line 178 "nmp/RV32F.nmp"
+		endif;	
+	}
+
+// Single-Precision Floating-Point Computational Instructions
+// ----------------------------------------------------------
+//    FADD.S
+op fadd_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fadd.s %s, %s, %s", dest, src1, src2)
+	image = format("0000000 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let roundingMod = rm;
+
+		let result = r1+r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "rounding"(result,roundingMod); 
+#line 196 "nmp/RV32F.nmp"
+#line 197 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 197 "nmp/RV32F.nmp"
+#line 198 "nmp/RV32F.nmp"
+	}
+
+//    FSUB.S
+op fsub_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsub.s %s, %s, %s", dest, src1, src2)
+	image = format("0000100 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let roundingMod = rm;
+
+		let result = r1-r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "rounding"(result,roundingMod); 
+#line 213 "nmp/RV32F.nmp"
+#line 214 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 214 "nmp/RV32F.nmp"
+#line 215 "nmp/RV32F.nmp"
+	}
+
+//   FMUL.S
+op fmul_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmul.s %s, %s, %s", dest, src1, src2)
+	image = format("0001000 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let roundingMod = rm;
+
+		let result = r1*r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "rounding"(result,roundingMod); 
+#line 230 "nmp/RV32F.nmp"
+#line 231 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 231 "nmp/RV32F.nmp"
+#line 232 "nmp/RV32F.nmp"
+	}
+
+//    FDIV.S
+op fdiv_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fdiv.s %s, %s, %s", dest, src1, src2)
+	image = format("0001100 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = F[src1];
+		let r2 = F[src2];
+		if r2 == 0 then FCSR<3..3> = 1; endif;
+		let roundingMod = rm;
+
+		let result = r1/r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "rounding"(result,roundingMod); 
+#line 248 "nmp/RV32F.nmp"
+#line 249 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 249 "nmp/RV32F.nmp"
+#line 250 "nmp/RV32F.nmp"
+	}
+
+// FSQRT.S //TODO switch
+op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsqrt.s %s, %s", dest, src)
+	image = format("0101100 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {
+		let domainError = 1;		
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+
+		//If F[src] is NaN, a NaN shall be returned.
+		if(F[src]<30..0>==sNan<30..0> || F[src]<30..0>==qNan<30..0>) then
+			if dest != 0 then F[dest] = F[src]; endif ;
+#line 263 "nmp/RV32F.nmp"
+#line 264 "nmp/RV32F.nmp"
+			domainError = 0;
+		endif;
+
+		//If F[src] is ±0 or +Inf, F[src] shall be returned.
+		if(F[src]<30..0> == 0 || (F[src]<31..31> == 0 && F[src]<30..23> == 255 && F[src]<22..0> == 0)) then
+			if dest != 0 then F[dest] = F[src]; endif ;
+#line 269 "nmp/RV32F.nmp"
+#line 270 "nmp/RV32F.nmp"
+			domainError = 0;
+		endif;
+
+		//If F[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
+		if(F[src]<31..31> == 1 && F[src]<30..23> != 0) then
+			"SignalException"(InvalidOperation);
+#line 275 "nmp/RV32F.nmp"
+#line 276 "nmp/RV32F.nmp"
+			FCSR<4..4> = 1;
+			if dest != 0 then F[dest] = qNan; endif ;
+#line 277 "nmp/RV32F.nmp"
+#line 278 "nmp/RV32F.nmp"
+			domainError = 0;
+		endif;
+
+		//If F[src] > PosNormal, compute sqrt
+		if(!domainError) then	
+			let result = "fsqrt32"(F[src]);
+#line 283 "nmp/RV32F.nmp"
+#line 284 "nmp/RV32F.nmp"
+			let roundingMod = rm;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "rounding"(result,roundingMod);
+#line 288 "nmp/RV32F.nmp"
+#line 289 "nmp/RV32F.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ;
+#line 289 "nmp/RV32F.nmp"
+#line 290 "nmp/RV32F.nmp"
+		endif;
+	}
+	
+// FMIN.S //TODO switch
+op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmin.s %s, %s, %s", dest, src1, src2) 
+	image = format("0010100 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		let NaN = 1;
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+		let nanCanonical = coerce(float(23,9),0b01111111110000000000000000000000);
+		
+		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
+		if((F[src1]<30..0> == sNan<30..0> || F[src2]<30..0> == sNan<30..0>) || (F[src1]<30..0> == qNan<30..0> && F[src2]<30..0> == qNan<30..0>)) then
+			NaN = 0;			
+			if dest != 0 then F[dest] = nanCanonical; endif ;
+#line 306 "nmp/RV32F.nmp"
+#line 307 "nmp/RV32F.nmp"
+		endif;
+		
+		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
+		if(!NaN && F[src1]<30..0> == qNan<30..0> && !(F[src2]<30..0> == qNan<30..0> || F[src2]<30..0> == sNan<30..0>)) then
+			NaN = 0;
+			if dest != 0 then F[dest] = F[src2]; endif ;
+#line 312 "nmp/RV32F.nmp"
+#line 313 "nmp/RV32F.nmp"
+		endif;
+		if(!NaN && F[src2]<30..0> == qNan<30..0> && !(F[src1]<30..0> == qNan<30..0> || F[src1]<30..0> == sNan<30..0>)) then
+			NaN = 0;
+			if dest != 0 then F[dest] = F[src1]; endif ;
+#line 316 "nmp/RV32F.nmp"
+#line 317 "nmp/RV32F.nmp"
+		endif;
+
+		if !NaN then
+			let condition = F[src1] < F[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			if condition then
+				if dest != 0 then F[dest] = F[src1]; endif ;
+#line 322 "nmp/RV32F.nmp"
+#line 323 "nmp/RV32F.nmp"
+			else 
+				if dest != 0 then F[dest] = F[src2]; endif ;
+#line 324 "nmp/RV32F.nmp"
+#line 325 "nmp/RV32F.nmp"
+			endif;
+		endif;
+	}
+
+
+// FMAX.S //TODO switch
+op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmax.s %s, %s, %s", dest, src1, src2) 
+	image = format("0010100 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		let NaN = 1;
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+		let nanCanonical = coerce(float(23,9),0b01111111110000000000000000000000);
+		
+		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
+		if((F[src1]<30..0> == sNan<30..0> || F[src2]<30..0> == sNan<30..0>) || (F[src1]<30..0> == qNan<30..0> && F[src2]<30..0> == qNan<30..0>)) then
+			NaN = 0;			
+			if dest != 0 then F[dest] = nanCanonical; endif ;
+#line 343 "nmp/RV32F.nmp"
+#line 344 "nmp/RV32F.nmp"
+		endif;
+		
+		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
+		if(!NaN && F[src1]<30..0> == qNan<30..0> && !(F[src2]<30..0> == qNan<30..0> || F[src2]<30..0> == sNan<30..0>)) then
+			NaN = 0;
+			if dest != 0 then F[dest] = F[src2]; endif ;
+#line 349 "nmp/RV32F.nmp"
+#line 350 "nmp/RV32F.nmp"
+		endif;
+		if(!NaN && F[src2]<30..0> == qNan<30..0> && !(F[src1]<30..0> == qNan<30..0> || F[src1]<30..0> == sNan<30..0>)) then
+			NaN = 0;
+			if dest != 0 then F[dest] = F[src1]; endif ;
+#line 353 "nmp/RV32F.nmp"
+#line 354 "nmp/RV32F.nmp"
+		endif;
+
+		if !NaN then
+			let condition = F[src1] > F[src2];
+			if condition then
+				if dest != 0 then F[dest] = F[src1]; endif ;
+#line 359 "nmp/RV32F.nmp"
+#line 360 "nmp/RV32F.nmp"
+			else
+				if dest != 0 then F[dest] = F[src2]; endif ;
+#line 361 "nmp/RV32F.nmp"
+#line 362 "nmp/RV32F.nmp"
+			endif;
+		endif;
+	}
+
+// Single-Precision Floating-Point Conversion and Move Instructions
+// -----------------------------------------------------------------
+//    FSGNJ.S
+op fsgnj_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = if src1 == src2 then 
+		format("fmv.s %s, %s", dest, src1)
+		else format("fsgnj.s %s, %s, %s", dest, src1, src2) endif 
+	image = format("0010000 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		if F[src1]==F[src2] then
+			if dest != 0 then F[dest] = F[src1]; endif ;
+#line 376 "nmp/RV32F.nmp"
+#line 377 "nmp/RV32F.nmp"
+		else
+			if dest != 0 then F[dest] = coerce(float(23,9),F[src2]<31..31>::F[src1]<30..0>); endif ;
+#line 378 "nmp/RV32F.nmp"
+#line 379 "nmp/RV32F.nmp"
+		endif;
+	}
+
+//   FSGNJN.S	
+op fsgnjn_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = if src1 == src2 then
+		format("fneg.s %s, %s", dest, src1)
+		else format("fsgnjn.s %s, %s, %s", dest, src1, src2) endif  
+	image = format("0010000 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		if F[src1]==F[src2] then
+			if dest != 0 then F[dest] = -F[src1]; endif ;
+#line 390 "nmp/RV32F.nmp"
+#line 391 "nmp/RV32F.nmp"
+		else	
+			if dest != 0 then F[dest] = coerce(float(23,9),(-F[src2]<31..31>)::F[src1]<30..0>); endif ;
+#line 392 "nmp/RV32F.nmp"
+#line 393 "nmp/RV32F.nmp"
+		endif;
+	}
+
+//   FSGNJX.S
+op fsgnjx_s(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = if src1 == src2 then 
+		format("fabs.s %s, %s", dest, src1)
+		else format("fsgnjx.s %s, %s, %s", dest, src1, src2) endif
+	image = format("0010000 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		if F[src1]==F[src2] then
+			F[src1]<63..63>=0;
+			if dest != 0 then F[dest] = F[src1]; endif ;
+#line 405 "nmp/RV32F.nmp"
+#line 406 "nmp/RV32F.nmp"
+		else
+			if dest != 0 then F[dest] = coerce(float(23,9),(F[src2]<31..31> ^ F[src1]<31..31>)::F[src1]<30..0>); endif ;
+#line 407 "nmp/RV32F.nmp"
+#line 408 "nmp/RV32F.nmp"
+		endif;
+	}
+
+//   FCVT.W.S //TODO switch
+op fcvt_w_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.w.s %s, %s", dest, src) 
+	image = format("1100000 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		let resultRound = "rounding"(F[src],rm);
+#line 416 "nmp/RV32F.nmp"
+#line 417 "nmp/RV32F.nmp"
+
+		//output for out-of-range negative input		
+		if(resultRound < (-2**31)) then
+			resultRound = coerce(float(23,9),-2**31);
+		endif;
+
+		//output for -infinite
+		if(resultRound<31..31>==1 && resultRound<30..23>==255) then
+			FCSR<2..2> = 1;			
+			resultRound = coerce(float(23,9),-2**31);
+		endif;
+		//output for out-of-range positive input
+		if(resultRound > (2**31 - 1)) then
+			resultRound = coerce(float(23,9),2**31 - 1);
+		endif;
+
+		//output for +infinite or NaN
+		if(resultRound<30..23>==255 && resultRound<22..0>!=0) then
+			FCSR<2..2> = 1;			
+			resultRound = coerce(float(23,9),2**31 - 1);
+		endif; 
+		if dest != 0 then R[dest] = coerce(word,resultRound); endif ;
+#line 438 "nmp/RV32F.nmp"
+#line 439 "nmp/RV32F.nmp"
+	}
+
+//   FCVT.WU.S //TODO switch
+op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.wu.s %s, %s", dest, src) 
+	image = format("1100000 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {
+		let resultRound = "rounding"(F[src],rm);
+#line 446 "nmp/RV32F.nmp"
+#line 447 "nmp/RV32F.nmp"
+		
+		//output for out-of-range negative input
+		if(resultRound<31..31>==1) then
+			resultRound = coerce(float(23,9),0);
+		endif;		
+
+		//output for -infinite
+		if(resultRound<31..31>==1 && resultRound<30..23>==255) then
+			resultRound = coerce(float(23,9),0);
+		endif;
+		//output for out-of-range positive input
+		if(resultRound > (2*32 - 1)) then
+			resultRound = coerce(float(23,9),2**32 - 1);
+		endif;
+
+		//output for +infinite or NaN
+		if(resultRound<30..23>==255 && resultRound<22..0>!=0) then
+			resultRound = coerce(float(23,9),2**32 - 1);
+		endif; 
+
+		if dest != 0 then R[dest] = coerce(uword,resultRound); endif ;
+#line 467 "nmp/RV32F.nmp"
+#line 468 "nmp/RV32F.nmp"
+	}
+
+//   FCVT.S.W
+op fcvt_s_w(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.w %s, %s", dest, src) 
+	image = format("1101000 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		let resultRound = "rounding"(coerce(float(23,9),R[src]),rm);
+#line 475 "nmp/RV32F.nmp"
+#line 476 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 476 "nmp/RV32F.nmp"
+#line 477 "nmp/RV32F.nmp"
+	}
+	
+//   FCVT.S.WU
+op fcvt_s_wu(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.s.wu %s, %s", dest, src) 
+	image = format("1101000 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		let resultRound = "rounding"(coerce(float(23,9),R[src]),rm);
+#line 484 "nmp/RV32F.nmp"
+#line 485 "nmp/RV32F.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 485 "nmp/RV32F.nmp"
+#line 486 "nmp/RV32F.nmp"
+	}
+
+//   FMV.W.X
+op fmv_w_x(src: reg_t, dest: freg_t)
+	syntax = format("fmv.w.x %s, %s", dest, src)
+	image = format("1111000 00000 %s 000 %s 1010011", src, dest)
+	action = {	
+		if dest != 0 then F[dest] = coerce(float(23,9),R[src]); endif ;
+#line 493 "nmp/RV32F.nmp"
+#line 494 "nmp/RV32F.nmp"
+	}
+	
+//   FMV.X.W
+op fmv_x_w(src: freg_t, dest: reg_t)
+	syntax = format("fmv.w.x %s, %s", dest, src)
+	image = format("1110000 00000 %s 000 %s 1010011", src, dest)
+	action = {
+		if dest != 0 then R[dest] = coerce(word,F[src]); endif ;
+#line 501 "nmp/RV32F.nmp"
+#line 502 "nmp/RV32F.nmp"
+	}
+
+
+// Single-Precision Floating-Point Compare Instructions
+// ----------------------------------------------------
+//   FLE.S
+op fle_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("fle.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+
+		//An invalid operation exception is raised if either input is NaN
+		if((F[src2]<30..0>==sNan<30..0> || F[src2]<30..0>==qNan<30..0>) || (F[src1]<30..0>==sNan<30..0> || F[src1]<30..0>==qNan<30..0>)) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 517 "nmp/RV32F.nmp"
+#line 518 "nmp/RV32F.nmp"
+			"SignalException"(InvalidOperation);
+#line 518 "nmp/RV32F.nmp"
+#line 519 "nmp/RV32F.nmp"
+		else 
+			let condition = F[src1] <= F[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 522 "nmp/RV32F.nmp"
+#line 523 "nmp/RV32F.nmp"
+			else 
+				if dest != 0 then R[dest] = 0; endif ;
+#line 524 "nmp/RV32F.nmp"
+#line 525 "nmp/RV32F.nmp"
+			endif;  
+		endif;
+	}
+
+//   FLT.S
+op flt_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("flt.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+
+		//An invalid operation exception is raised if either input is NaN
+		if((F[src2]<30..0>==sNan<30..0> || F[src2]<30..0>==qNan<30..0>) || (F[src1]<30..0>==sNan<30..0> || F[src1]<30..0>==qNan<30..0>)) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 539 "nmp/RV32F.nmp"
+#line 540 "nmp/RV32F.nmp"
+			"SignalException"(InvalidOperation);
+#line 540 "nmp/RV32F.nmp"
+#line 541 "nmp/RV32F.nmp"
+		else 
+			let condition = F[src1] < F[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 544 "nmp/RV32F.nmp"
+#line 545 "nmp/RV32F.nmp"
+			else 
+				if dest != 0 then R[dest] = 0; endif ;
+#line 546 "nmp/RV32F.nmp"
+#line 547 "nmp/RV32F.nmp"
+			endif;  
+		endif;
+	}
+	
+//   FEQ.S
+op feq_s(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("feq.s %s, %s, %s", dest, src1, src2) 
+	image = format("1010000 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		let sNan = coerce(float(23,9),0b01111111100000000000000000000001);
+		let qNan = coerce(float(23,9),0b01111111110000000000000000000001);
+
+		//Only signaling NaN inputs cause an invalid operation exception
+		if(F[src2]<30..0>==sNan<30..0> || F[src1]<30..0>==sNan<30..0>) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 561 "nmp/RV32F.nmp"
+#line 562 "nmp/RV32F.nmp"
+			"SignalException"(InvalidOperation);
+#line 562 "nmp/RV32F.nmp"
+#line 563 "nmp/RV32F.nmp"
+		else 
+			let condition = F[src1] == F[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 566 "nmp/RV32F.nmp"
+#line 567 "nmp/RV32F.nmp"
+			else 
+				if dest != 0 then R[dest] = 0; endif ;
+#line 568 "nmp/RV32F.nmp"
+#line 569 "nmp/RV32F.nmp"
+			endif;  
+		endif;
+	}
+
+// classification instructions
+//	bit sign	    exponent	          mantissa
+// (F[src]<31..31>   &&   F[src]<30..23>   &&   F[src]<22..0>)
+op fclass_s(src: freg_t, dest: reg_t)
+	syntax = format("fclass.s %s, %s", dest, src)
+	image = format("1110000 00000 %s 001 %s 1010011", src, dest)
+	action = {	
+		if dest != 0 then R[dest] = 0; endif ;
+#line 580 "nmp/RV32F.nmp"
+#line 581 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 1 && F[src]<30..23> == 255 && F[src]<22..0> == 0) then
+			if dest != 0 then R[dest] = 1; endif ; endif;//NegInfinity, bit 0
+#line 582 "nmp/RV32F.nmp"
+#line 583 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 1 && F[src]<30..23> != 0 && F[src]<30..23> < 255) then
+			if dest != 0 then R[dest] = 1<<1; endif ; endif; //NegNormal, bit 1
+#line 584 "nmp/RV32F.nmp"
+#line 585 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 1 && F[src]<30..23> == 0 && F[src]<22..0> != 0) then
+			if dest != 0 then R[dest] = 1<<2; endif ; endif; //NegSubnormal, bit 2 
+#line 586 "nmp/RV32F.nmp"
+#line 587 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 1 && F[src]<30..23> == 0 && F[src]<22..0> == 0) then
+			if dest != 0 then R[dest] = 1<<3; endif ; endif; //NegZero, bit 3
+#line 588 "nmp/RV32F.nmp"
+#line 589 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 0 && F[src]<30..23> == 0 && F[src]<22..0> == 0) then
+			if dest != 0 then R[dest] = 1<<4; endif ; endif; //PosZero, bit 4
+#line 590 "nmp/RV32F.nmp"
+#line 591 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 0 && F[src]<30..23> == 0 && F[src]<22..0> != 0) then
+			if dest != 0 then R[dest] = 1<<5; endif ; endif; //PosSubnormal, bit 5
+#line 592 "nmp/RV32F.nmp"
+#line 593 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 0 && F[src]<30..23> != 0 && F[src]<30..23> < 255) then
+			if dest != 0 then R[dest] = 1<<6; endif ; endif; //PosNormal, bit 6
+#line 594 "nmp/RV32F.nmp"
+#line 595 "nmp/RV32F.nmp"
+		if(F[src]<31..31> == 0 && F[src]<30..23> == 255 && F[src]<22..0> == 0) then
+			if dest != 0 then R[dest] = 1<<7; endif ; endif; //PosInfinity, bit 7
+#line 596 "nmp/RV32F.nmp"
+#line 597 "nmp/RV32F.nmp"
+		if(F[src]<30..23> == 255 && F[src]<22..1> == 0 && F[src]<0..0> == 1) then 
+			if dest != 0 then R[dest] = 1<<8; endif ; endif; //SignalingNan, bit 8
+#line 598 "nmp/RV32F.nmp"
+#line 599 "nmp/RV32F.nmp"
+		if(F[src]<30..23> == 255 && F[src]<22..22> == 1 && F[src]<21..1> == 0 && F[src]<0..0> == 1) then
+			if dest != 0 then R[dest] = 1<<9; endif ; endif;//QuietNan, bit 9
+#line 600 "nmp/RV32F.nmp"
+#line 601 "nmp/RV32F.nmp"
+	}
+
+#line 190 "RV32G.nmp"
+#line 1 "nmp/RV32D.nmp"
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Floating Point Operations
+op rv32d =
+	  fld
+	| fsd
+	| fmadd_d
+	| fmsub_d
+	| fnmsub_d
+	| fnmadd_d
+	| fadd_d
+	| fsub_d
+	| fmul_d
+	| fdiv_d
+	| fsqrt_d
+	| fsgnj_d 
+	| fsgnjn_d 
+	| fsgnjx_d 	
+	| fmin_d
+	| fmax_d
+	| fcvt_s_d
+	| fcvt_d_s
+	| feq_d	
+	| flt_d
+	| fle_d
+	| fclass_d
+	| fcvt_w_d
+	| fcvt_wu_d
+	| fcvt_d_w
+	| fcvt_d_wu
+
+// 9.3 Double-Precision Load and Store Instructions
+// ------------------------------------------------
+op fld(offset: int(12), base: reg_t, dest: freg_t)
+	syntax = format("fld %s, %d(%s)", dest, offset, base)
+	image = format("%12b %s 011 %s 0000111", offset, base, dest)
+	action = {	
+		let vAddr = offset + R[base];
+		let memword = M32D[vAddr];
+		if dest != 0 then D[dest] = memword; endif ;
+#line 59 "nmp/RV32D.nmp"
+#line 60 "nmp/RV32D.nmp"
+	}
+
+op fsd(offset: int(12), src: freg_t, base: reg_t)
+	syntax = format("fsd %s, %d(%s)", src, offset, base)
+	image = format("%7b %s %s 011 %5b 0100111", offset<11..5>, src, base, offset<4..0>)
+	action = {	
+		let vAddr = offset + R[base];
+			let  uncached = 0; 
+#line 67 "nmp/RV32D.nmp"
+	let pAddr =  vAddr;
+#line 67 "nmp/RV32D.nmp"
+#line 68 "nmp/RV32D.nmp"
+		let dataword = D[src];
+		M32D[ pAddr] =  dataword;
+#line 69 "nmp/RV32D.nmp"
+#line 70 "nmp/RV32D.nmp"
+	}
+
+
+// 9.4 Double-Precision Floating-Point Computational Instructions
+// --------------------------------------------------------------
+op fadd_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fadd.d %s, %s, %s", dest, src1, src2)
+	image = format("0000001 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let roundingMod = rm;
+
+		let result = r1+r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "roundingDouble"(result,roundingMod); 
+#line 87 "nmp/RV32D.nmp"
+#line 88 "nmp/RV32D.nmp"
+		if dest != 0 then D[dest] = resultRound; endif;
+#line 88 "nmp/RV32D.nmp"
+#line 89 "nmp/RV32D.nmp"
+	}
+
+op fsub_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsub.d %s, %s, %s", dest, src1, src2)
+	image = format("0000101 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let roundingMod = rm;
+
+		let result = r1-r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "roundingDouble"(result,roundingMod); 
+#line 103 "nmp/RV32D.nmp"
+#line 104 "nmp/RV32D.nmp"
+		if dest != 0 then D[dest] = resultRound; endif;
+#line 104 "nmp/RV32D.nmp"
+#line 105 "nmp/RV32D.nmp"
+	}
+
+op fmul_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmul.d %s, %s, %s", dest, src1, src2)
+	image = format("0001001 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let roundingMod = rm;
+
+		let result = r1*r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "roundingDouble"(result,roundingMod); 
+#line 119 "nmp/RV32D.nmp"
+#line 120 "nmp/RV32D.nmp"
+		if dest != 0 then D[dest] = resultRound; endif;
+#line 120 "nmp/RV32D.nmp"
+#line 121 "nmp/RV32D.nmp"
+	}
+
+op fdiv_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fdiv.d %s, %s, %s", dest, src1, src2)
+	image = format("0001101 %s %s %3b %s 1010011", src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		if r2 == 0 then FCSR<3..3> = 1; endif;
+		let roundingMod = rm;
+
+		let result = r1/r2;
+		if roundingMod == 7 then
+			roundingMod = FCSR<7..5>;
+		endif;
+		let resultRound = "roundingDouble"(result,roundingMod); 
+#line 136 "nmp/RV32D.nmp"
+#line 137 "nmp/RV32D.nmp"
+		if dest != 0 then D[dest] = resultRound; endif;
+#line 137 "nmp/RV32D.nmp"
+#line 138 "nmp/RV32D.nmp"
+	}
+	
+
+op fmin_d(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmin.d %s, %s, %s", dest, src1, src2)  
+	image = format("0010101 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		let NaN = 1;
+		let sNan = coerce(float(52,12),0b0111111111110000000000000000000000000000000000000000000000000001);
+		let qNan = coerce(float(52,12),0b0111111111111000000000000000000000000000000000000000000000000001);
+		let nanCanonical = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
+
+		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
+		if((D[src1]<62..0> == sNan<62..0> || D[src2]<62..0> == sNan<62..0>) || (D[src1]<62..0> == qNan<62..0> && D[src2]<62..0> == qNan<62..0>)) then
+			NaN = 0;			
+			if dest != 0 then D[dest] = nanCanonical; endif;
+#line 153 "nmp/RV32D.nmp"
+#line 154 "nmp/RV32D.nmp"
+		endif;
+
+		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
+		if(!NaN && D[src1]<62..0> == qNan<62..0> && !(D[src2]<62..0> == qNan<62..0> || D[src2]<62..0> == sNan<62..0>)) then
+			NaN = 0;
+			if dest != 0 then D[dest] = D[src2]; endif;
+#line 159 "nmp/RV32D.nmp"
+#line 160 "nmp/RV32D.nmp"
+		endif;
+		if(!NaN && D[src2]<62..0> == qNan<62..0> && !(D[src1]<62..0> == qNan<62..0> || F[src1]<62..0> == sNan<62..0>)) then
+			NaN = 0;
+			if dest != 0 then D[dest] = D[src1]; endif;
+#line 163 "nmp/RV32D.nmp"
+#line 164 "nmp/RV32D.nmp"
+		endif;
+
+		if !NaN then
+			let condition = D[src1] < D[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			if condition then
+				if dest != 0 then D[dest] = D[src1]; endif;
+#line 169 "nmp/RV32D.nmp"
+#line 170 "nmp/RV32D.nmp"
+			else 
+				if dest != 0 then D[dest] = D[src2]; endif;
+#line 171 "nmp/RV32D.nmp"
+#line 172 "nmp/RV32D.nmp"
+			endif;
+		endif;
+
+	}
+
+op fmax_d(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = format("fmax.d %s, %s, %s", dest, src1, src2)
+	image = format("0010101 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		let NaN = 1;
+		let sNan = coerce(float(52,12),0b0111111111110000000000000000000000000000000000000000000000000001);
+		let qNan = coerce(float(52,12),0b0111111111111000000000000000000000000000000000000000000000000001);
+		let nanCanonical = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
+
+		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
+		if((D[src1]<62..0> == sNan<62..0> || D[src2]<62..0> == sNan<62..0>) || (D[src1]<62..0> == qNan<62..0> && D[src2]<62..0> == qNan<62..0>)) then
+			NaN = 0;			
+			if dest != 0 then D[dest] = nanCanonical; endif;
+#line 189 "nmp/RV32D.nmp"
+#line 190 "nmp/RV32D.nmp"
+		endif;
+
+		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
+		if(!NaN && D[src1]<62..0> == qNan<62..0> && !(D[src2]<62..0> == qNan<62..0> || D[src2]<62..0> == sNan<62..0>)) then
+			NaN = 0;
+			if dest != 0 then D[dest] = D[src2]; endif;
+#line 195 "nmp/RV32D.nmp"
+#line 196 "nmp/RV32D.nmp"
+		endif;
+		if(!NaN && D[src2]<62..0> == qNan<62..0> && !(D[src1]<62..0> == qNan<62..0> || F[src1]<62..0> == sNan<62..0>)) then
+			NaN = 0;
+			if dest != 0 then D[dest] = D[src1]; endif;
+#line 199 "nmp/RV32D.nmp"
+#line 200 "nmp/RV32D.nmp"
+		endif;
+
+		if !NaN then
+			let condition = D[src1] > D[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			if condition then
+				if dest != 0 then D[dest] = D[src1]; endif;
+#line 205 "nmp/RV32D.nmp"
+#line 206 "nmp/RV32D.nmp"
+			else 
+				if dest != 0 then D[dest] = D[src2]; endif;
+#line 207 "nmp/RV32D.nmp"
+#line 208 "nmp/RV32D.nmp"
+			endif;
+		endif;
+	}
+	
+op fsqrt_d(src: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fsqrt.d %s, %s", dest, src)
+	image = format("0101101 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		let domainError = 1;
+		let Nan = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
+
+		//If D[src] is NaN, a NaN shall be returned.
+		if(D[src]<62..52>==Nan<62..52> && D[src]<51..0>!=0) then
+			if dest != 0 then D[dest] = D[src]; endif;
+#line 221 "nmp/RV32D.nmp"
+#line 222 "nmp/RV32D.nmp"
+			domainError = 0;
+		endif;
+
+		//If D[src] is ±0 or +Inf, D[src] shall be returned.
+		if(D[src]<62..0> == 0 || (D[src]<63..63> == 0 && D[src]<62..52> == 0b11111111111 && D[src]<51..0> == 0)) then
+			if dest != 0 then D[dest] = D[src]; endif;
+#line 227 "nmp/RV32D.nmp"
+#line 228 "nmp/RV32D.nmp"
+			domainError = 0;
+		endif;
+
+		//If D[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
+		if(D[src]<63..63> == 1) then
+			"SignalException"(InvalidOperation);
+#line 233 "nmp/RV32D.nmp"
+#line 234 "nmp/RV32D.nmp"
+			FCSR<4..4> = 1;
+			if dest != 0 then D[dest] = Nan; endif;
+#line 235 "nmp/RV32D.nmp"
+#line 236 "nmp/RV32D.nmp"
+			domainError = 0;
+		endif;
+
+		//If D[src] -> PosNormal, compute sqrt
+		if(!domainError) then	
+			let result = "fsqrt64"(D[src]);
+#line 241 "nmp/RV32D.nmp"
+#line 242 "nmp/RV32D.nmp"
+			let roundingMod = rm;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "roundingDouble"(result,roundingMod);
+#line 246 "nmp/RV32D.nmp"
+#line 247 "nmp/RV32D.nmp"
+			if dest != 0 then F[dest] = resultRound; endif ;
+#line 247 "nmp/RV32D.nmp"
+#line 248 "nmp/RV32D.nmp"
+		endif;
+	}
+
+	// fused multiply add/sub
+op fmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 01 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1]; //reg F[32, float(23,9)]
+		let r2 = D[src2];
+		let r3 = D[src3];
+		let roundingMod = rm;
+
+		//raise the invalid operation exception when the multiplicands are infinite and zero
+		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);			
+#line 264 "nmp/RV32D.nmp"
+#line 265 "nmp/RV32D.nmp"
+		else
+			let result = r1*r2+r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "roundingDouble"(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
+#line 270 "nmp/RV32D.nmp"
+#line 271 "nmp/RV32D.nmp"
+			if dest != 0 then D[dest] = resultRound; endif; 
+#line 271 "nmp/RV32D.nmp"
+#line 272 "nmp/RV32D.nmp"
+		endif;
+	}
+
+op fmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 01 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let r3 = D[src3];
+		let roundingMod = rm;
+
+		//raise the invalid operation exception when the multiplicands are infinite and zero
+		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);			
+#line 287 "nmp/RV32D.nmp"
+#line 288 "nmp/RV32D.nmp"
+		else
+			let result = r1*r2-r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "roundingDouble"(result,roundingMod); 
+#line 293 "nmp/RV32D.nmp"
+#line 294 "nmp/RV32D.nmp"
+			if dest != 0 then D[dest] = resultRound; endif; 
+#line 294 "nmp/RV32D.nmp"
+#line 295 "nmp/RV32D.nmp"
+		endif;
+	}
+
+op fnmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 01 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let r3 = D[src3];
+		let roundingMod = rm;
+
+		//raise the invalid operation exception when the multiplicands are infinite and zero
+		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);			
+#line 310 "nmp/RV32D.nmp"
+#line 311 "nmp/RV32D.nmp"
+		else
+			let result = -r1*r2-r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "roundingDouble"(result,roundingMod); 
+#line 316 "nmp/RV32D.nmp"
+#line 317 "nmp/RV32D.nmp"
+			if dest != 0 then D[dest] = resultRound; endif; 
+#line 317 "nmp/RV32D.nmp"
+#line 318 "nmp/RV32D.nmp"
+		endif;
+	}
+
+op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fnmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
+	image = format("%s 01 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
+	action = {	
+		let r1 = D[src1];
+		let r2 = D[src2];
+		let r3 = D[src3];
+		let roundingMod = rm;
+
+		//raise the invalid operation exception when the multiplicands are infinite and zero
+		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
+			FCSR<4..4> = 1;
+			"SignalException"(InvalidOperation);			
+#line 333 "nmp/RV32D.nmp"
+#line 334 "nmp/RV32D.nmp"
+		else
+			let result = -r1*r2+r3;
+			if roundingMod == 7 then
+				roundingMod = FCSR<7..5>;
+			endif;
+			let resultRound = "roundingDouble"(result,roundingMod); 
+#line 339 "nmp/RV32D.nmp"
+#line 340 "nmp/RV32D.nmp"
+			if dest != 0 then D[dest] = resultRound; endif; 
+#line 340 "nmp/RV32D.nmp"
+#line 341 "nmp/RV32D.nmp"
+		endif;
+	}
+
+
+// 9.5 Double-Precision Floating-Point Conversion and Move Instructions
+// --------------------------------------------------------------------
+
+op fsgnj_d(src2: freg_t, src1: freg_t,  dest: freg_t)
+	syntax = if src1 == src2 then 
+		format("fmv.s %s, %s", dest, src1)
+		else format("fsgnj.d %s, %s, %s", dest, src1, src2) endif 
+	image = format("0010001 %s %s 000 %s 1010011", src2, src1,  dest)
+	action = {
+		if D[src1]==D[src2] then
+			if dest != 0 then D[dest] = D[src1]; endif;
+#line 355 "nmp/RV32D.nmp"
+#line 356 "nmp/RV32D.nmp"
+		else			
+			if dest != 0 then D[dest] = coerce(float(52,12),D[src2]<63..63>::D[src1]<62..0>); endif;
+#line 357 "nmp/RV32D.nmp"
+#line 358 "nmp/RV32D.nmp"
+		endif;
+	}
+	
+	
+op fsgnjn_d(src2: freg_t, src1: freg_t,  dest: freg_t)
+	syntax = if src1 == src2 then
+		format("fneg.s %s, %s", dest, src1)
+		else format("fsgnjn.d %s, %s, %s", dest, src1, src2) endif
+	image = format("0010001 %s %s 001 %s 1010011", src2, src1,  dest)
+	action = {	
+		if D[src1]==D[src2] then
+			if dest != 0 then D[dest] = -D[src1]; endif;
+#line 369 "nmp/RV32D.nmp"
+#line 370 "nmp/RV32D.nmp"
+		else			
+			if dest != 0 then D[dest] = coerce(float(52,12),(-D[src2]<63..63>)::D[src1]<62..0>); endif;
+#line 371 "nmp/RV32D.nmp"
+#line 372 "nmp/RV32D.nmp"
+		endif;
+	}
+		
+op fsgnjx_d(src2: freg_t, src1: freg_t, dest: freg_t)
+	syntax = if src1 == src2 then 
+		format("fabs.s %s, %s", dest, src1) 
+		else format("fsgnjx.d %s, %s, %s", dest, src1, src2) endif
+	image = format("0010001 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		if D[src1]==D[src2] then
+			D[src1]<63..63>=0;
+			if dest != 0 then D[dest] = D[src1]; endif;
+#line 383 "nmp/RV32D.nmp"
+#line 384 "nmp/RV32D.nmp"
+		else			
+			if dest != 0 then D[dest] = coerce(float(52,12),(D[src2]<63..63> ^ D[src1]<63..63>)::D[src1]<62..0>); endif;
+#line 385 "nmp/RV32D.nmp"
+#line 386 "nmp/RV32D.nmp"
+		endif;
+	}
+
+op fcvt_s_d(src: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fcvt.s.d %s, %s", dest, src) 
+	image = format("0100000 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		let resultRound = "rounding"(coerce(float(23,9),D[src]),rm);
+#line 393 "nmp/RV32D.nmp"
+#line 394 "nmp/RV32D.nmp"
+		if dest != 0 then F[dest] = resultRound; endif ;
+#line 394 "nmp/RV32D.nmp"
+#line 395 "nmp/RV32D.nmp"
+	}
+	
+op fcvt_d_s( src: freg_t, rm: card(3), dest: freg_t)
+	syntax = format("fcvt.d.s %s, %s", dest, src)
+	image = format("0100001 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {
+		//FCVT.D.S will never round	
+		if dest != 0 then D[dest] = coerce(float(52,12),F[src]); endif;
+#line 402 "nmp/RV32D.nmp"
+#line 403 "nmp/RV32D.nmp"
+	}
+
+op fcvt_w_d(src: freg_t, rm: card(3), dest: reg_t)
+	syntax =  format("fcvt.w.d %s, %s", dest, src) 
+	image = format("1100001 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		if dest != 0 then R[dest] = coerce(word,D[src]); endif ;
+#line 409 "nmp/RV32D.nmp"
+#line 410 "nmp/RV32D.nmp"
+	}
+
+op fcvt_wu_d(src: freg_t, rm: card(3), dest: reg_t)
+	syntax = format("fcvt.wu.d %s, %s", dest, src)
+	image = format("1100001 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		if dest != 0 then R[dest] = coerce(uword,D[src]); endif ;
+#line 416 "nmp/RV32D.nmp"
+#line 417 "nmp/RV32D.nmp"
+		//output for out-of-range negative input
+		if(D[src]<63..63>==1) then
+			if dest != 0 then R[dest] = coerce(uword,0); endif ;
+#line 419 "nmp/RV32D.nmp"
+#line 420 "nmp/RV32D.nmp"
+		endif;		
+
+		//output for out-of-range positive input
+		if(D[src] > (2*32 - 1)) then
+			if dest != 0 then R[dest] = coerce(uword,2**32 - 1); endif ;
+#line 424 "nmp/RV32D.nmp"
+#line 425 "nmp/RV32D.nmp"
+		endif;
+
+		//output for +infinite or NaN
+		if(D[src]<63..52>==0b111111111111 || (D[src]<62..52>==0b11111111111 && D[src]<51..0>!=0)) then
+			if dest != 0 then R[dest] = coerce(uword,2**32 - 1); endif ;
+#line 429 "nmp/RV32D.nmp"
+#line 430 "nmp/RV32D.nmp"
+		endif; 
+	}
+
+op fcvt_d_w(src: reg_t, rm: card(3), dest: freg_t)
+	syntax =  format("fcvt.d.w %s, %s", dest, src) 
+	image = format("1101001 00000 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		if dest != 0 then D[dest] = coerce(float(52,12),R[src]); endif;
+#line 437 "nmp/RV32D.nmp"
+#line 438 "nmp/RV32D.nmp"
+	}
+	
+op fcvt_d_wu(src: reg_t, rm: card(3), dest: freg_t)
+	syntax = format("fcvt.d.wu %s, %s", dest, src)
+	image  = format("1101001 00001 %s %3b %s 1010011", src, rm, dest)
+	action = {	
+		if dest != 0 then D[dest] = coerce(float(52,12),R[src]); endif;
+#line 444 "nmp/RV32D.nmp"
+#line 445 "nmp/RV32D.nmp"
+	}
+
+// 9.6 Double-Precision Floating-Point Compare Instructions
+// ----------------------------------------------------
+op fle_d(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("fle.d %s, %s, %s", dest, src1, src2) 
+	image = format("1010001 %s %s 000 %s 1010011", src2, src1, dest)
+	action = {	
+		//An invalid operation exception is raised if either input is NaN
+		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 455 "nmp/RV32D.nmp"
+#line 456 "nmp/RV32D.nmp"
+			"SignalException"(InvalidOperation);
+#line 456 "nmp/RV32D.nmp"
+#line 457 "nmp/RV32D.nmp"
+		else
+			let condition = D[src1] <= D[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 460 "nmp/RV32D.nmp"
+#line 461 "nmp/RV32D.nmp"
+			else 
+				if dest != 0 then R[dest] = 0; endif ;
+#line 462 "nmp/RV32D.nmp"
+#line 463 "nmp/RV32D.nmp"
+			endif;  
+		endif;
+	}
+
+op flt_d(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("flt.d %s, %s, %s", dest, src1, src2)
+	image = format("1010001 %s %s 001 %s 1010011", src2, src1, dest)
+	action = {	
+		//An invalid operation exception is raised if either input is NaN
+		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 473 "nmp/RV32D.nmp"
+#line 474 "nmp/RV32D.nmp"
+			"SignalException"(InvalidOperation);
+#line 474 "nmp/RV32D.nmp"
+#line 475 "nmp/RV32D.nmp"
+		else
+			let condition = D[src1] < D[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 478 "nmp/RV32D.nmp"
+#line 479 "nmp/RV32D.nmp"
+			else 
+				if dest != 0 then R[dest] = 0; endif ;
+#line 480 "nmp/RV32D.nmp"
+#line 481 "nmp/RV32D.nmp"
+			endif;  
+		endif;
+	}
+	
+op feq_d(src2: freg_t, src1: freg_t, dest: reg_t)
+	syntax = format("feq.d %s, %s, %s", dest, src1, src2)
+	image = format("1010001 %s %s 010 %s 1010011", src2, src1, dest)
+	action = {	
+		//Only signaling NaN inputs cause an invalid operation exception
+		if(D[src1]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001 || D[src2]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001) then
+			if dest != 0 then R[dest] = 0; endif ;
+#line 491 "nmp/RV32D.nmp"
+#line 492 "nmp/RV32D.nmp"
+			"SignalException"(InvalidOperation);
+#line 492 "nmp/RV32D.nmp"
+#line 493 "nmp/RV32D.nmp"
+		else
+			let condition = D[src1] == D[src2];
+			if condition then
+				if dest != 0 then R[dest] = 1; endif ;
+#line 496 "nmp/RV32D.nmp"
+#line 497 "nmp/RV32D.nmp"
+			else
+				if dest != 0 then R[dest] = 0; endif ;
+#line 498 "nmp/RV32D.nmp"
+#line 499 "nmp/RV32D.nmp"
+			endif;
+		endif;
+	}
+
+// 9.7 Double-Precision Floating-Point Classify Instruction 
+// --------------------------------------------------------
+//	bit sign	    exponent	          mantissa
+// (D[src]<63..63>   &&   D[src]<62..52>   &&   D[src]<51..0>)
+op fclass_d(src: freg_t, dest: reg_t)
+	syntax = format("fclass.d %s, %s", dest, src)
+	image = format("1110001 00000 %s 001 %s 1010011", src, dest)
+	action = {	
+		if dest != 0 then R[dest] = 0; endif ;
+#line 511 "nmp/RV32D.nmp"
+#line 512 "nmp/RV32D.nmp"
+		//NegInfinity, bit 0
+		if(D[src]<63..52>==0b111111111111 && D[src]<51..0>==0) then
+			if dest != 0 then R[dest] = 1; endif ;
+#line 514 "nmp/RV32D.nmp"
+#line 515 "nmp/RV32D.nmp"
+		endif;
+		//NegNormal, bit 1
+		if(D[src]<63..63>==1 && D[src]<62..52>!=0 && D[src]<62..52> < 0b11111111111) then
+			if dest != 0 then R[dest] = 1<<1; endif ;
+#line 518 "nmp/RV32D.nmp"
+#line 519 "nmp/RV32D.nmp"
+		endif;
+		//NegSubnormal, bit 2
+		if(D[src]<63..52>==0b100000000000 && D[src]<51..0>!=0) then
+			if dest != 0 then R[dest] = 1<<2; endif ;
+#line 522 "nmp/RV32D.nmp"
+#line 523 "nmp/RV32D.nmp"
+		endif;
+		//NegZero, bit 3
+		if(D[src]<63..0>==0b1000000000000000000000000000000000000000000000000000000000000000) then
+			if dest != 0 then R[dest] = 1<<3; endif ;
+#line 526 "nmp/RV32D.nmp"
+#line 527 "nmp/RV32D.nmp"
+		endif;
+		//PosZero, bit 4
+		if(D[src]<63..0>==0) then 
+			if dest != 0 then R[dest] = 1<<4; endif ;
+#line 530 "nmp/RV32D.nmp"
+#line 531 "nmp/RV32D.nmp"
+		endif;
+		//PosSubnormal, bit 5
+		if(D[src]<63..52>==0 && D[src]<51..0>!=0) then
+			if dest != 0 then R[dest] = 1<<5; endif ;
+#line 534 "nmp/RV32D.nmp"
+#line 535 "nmp/RV32D.nmp"
+		endif;
+		//PosNormal, bit 6
+		if(D[src]<63..63>==0 && D[src]<62..52> > 0 && D[src]<62..52> < 0b11111111111) then
+			if dest != 0 then R[dest] = 1<<6; endif ;
+#line 538 "nmp/RV32D.nmp"
+#line 539 "nmp/RV32D.nmp"
+		endif;
+		//PosInfinity, bit 7
+		if(D[src]<63..52>==0b011111111111 && D[src]<51..0>==0) then
+			if dest != 0 then R[dest] = 1<<7; endif ;
+#line 542 "nmp/RV32D.nmp"
+#line 543 "nmp/RV32D.nmp"
+		endif;
+		//SignalingNan, bit 8
+		if(D[src]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001) then
+			if dest != 0 then R[dest] = 1<<8; endif ;
+#line 546 "nmp/RV32D.nmp"
+#line 547 "nmp/RV32D.nmp"
+		endif;
+		//QuietNan, bit 9
+		if(D[src]<62..0>==0b111111111111000000000000000000000000000000000000000000000000001) then
+			if dest != 0 then R[dest] = 1<<9; endif ;
+#line 550 "nmp/RV32D.nmp"
+#line 551 "nmp/RV32D.nmp"
+		endif;
+		
+	}
+
+
+#line 192 "RV32G.nmp"

@@ -1,0 +1,59 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// load instructions
+op all_load64 =
+	| lwu
+	| ld
+
+// store instructions
+op all_stores64 =
+	| sd
+
+// 64-bit load instructions	
+op ld(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("ld %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 011 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = R[base] + offset;
+		setR(dest, M64[vAddr]);
+	}
+
+op lwu(offset: int(12), base: reg_t, dest: reg_t)
+	syntax = format("lwu %s, %d(%s)", dest, offset, base)
+	image  = format("%12b %s 110 %s 0000011", offset, base, dest)
+	action = {
+		let vAddr = offset + R[base];
+		setR(dest, coerce(duword, M32[vAddr]));
+	}
+
+
+// 64-bit store instruction
+op sd(offset: int(12), src: reg_t, base: reg_t)
+	syntax = format("sd %s, %d(%s)", src, offset, base)
+	image  = format("%7b %s %s 011 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
+	action = {
+		let vAddr = offset + R[base];
+		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
+		let datadouble = R[src];
+		StoreMemoryDOUBLEWORD(uncached, datadouble, pAddr, vAddr);
+	}
+
