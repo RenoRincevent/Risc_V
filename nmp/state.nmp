@@ -36,5 +36,8 @@ reg F		[32, float(23,9)]
 reg D		[32, doublef]
 reg LLbit	[ 1, card(1)]
 reg FCSR	[ 1, word]
+reg FFLAGS	[ 1, address]
+reg FRM		[ 1, address]
+
 
 
