@@ -32,7 +32,6 @@ mem M32D [32,doublef] alias = M
 reg PC  	[ 1, address] is_pc = 1
 reg NPC 	[ 1, address]
 reg R		[32, word]
-reg R64		[32, dword]
 reg F		[32, float(23,9)]
 reg D		[32, doublef]
 reg LLbit	[ 1, card(1)]

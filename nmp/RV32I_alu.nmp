@@ -143,7 +143,6 @@ op srli(shamt: card(6), src: reg_t, dest: reg_t)
 	}
 
 //// SRAI	
-//TODO generate an illegal instruction exception if shamt<5..5> != 0.	
 op srai(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("srai %s, %s, %d", dest, src, shamt)
 	image  = format("010000 %6b %s 101 %s 0010011", shamt, src, dest)

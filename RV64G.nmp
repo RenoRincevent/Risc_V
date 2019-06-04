@@ -20,7 +20,7 @@
  */
 
 include "nmp/config.nmp"
-include "nmp/state64.nmp"
+include "nmp/state.nmp"
 include "nmp/macros.nmp"
 
 // GLISS configuration
@@ -29,16 +29,13 @@ let bit_order = "uppermost"
 let gliss_isize = "32"
 //let bit_image_order =  1
 // types
-//TODO creer state64.nmp pour le 64 bits ?
 type bit       = card( 1)
 type ubyte     = card( 8)
 type uhalf     = card(16)
-type uword     = card(32)
-type duword    = card(64)
+type uword     = card(64)
 type byte      = int ( 8)
 type half      = int (16)
-type word      = int (32)
-type dword     = int (64)
+type word      = int (64)
 type address   = card(64)
 type index     = card( 5)
 
