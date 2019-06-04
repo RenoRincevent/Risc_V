@@ -101,12 +101,16 @@ op srlw(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("srlw %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 101 %s 0111011", src2, src1, dest)
 	action = {
-		// empty, no simulation
+		let s = src2<4..0>;
+		let temp = coerce(card(32), R[src1]<31..0>) >> s;
+		setR(dest,coerce(word,temp));
 	}
 
 op sraw(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sraw %s, %s, %s", dest, src1, src2)
 	image = format("0100000 %s %s 101 %s 0111011", src2, src1, dest)
 	action = {
-		// empty, no simulation
+		let s = src2<4..0>;
+		let temp = coerce(int(32), R[src1]<31..0>) >> s;
+		setR(dest,coerce(word,temp));
 	}

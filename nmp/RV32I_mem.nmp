@@ -40,7 +40,8 @@ op lb(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		setR(dest, M[vAddr]);
+		let data = M32[vAddr]<7..0>
+		setR(dest, coerce(word, data));
 	}
 
 op lbu(offset: int(12), base: reg_t, dest: reg_t)
@@ -48,7 +49,8 @@ op lbu(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		setR(dest, coerce(card(32), M[vAddr]));
+		let data = M32[vAddr]<7..0>
+		setR(dest, coerce(uword, data));
 	}
 
 op lh(offset: int(12), base: reg_t, dest: reg_t)
@@ -56,7 +58,8 @@ op lh(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		setR(dest, coerce(int(32), M16[vAddr]));
+		let data = M32[vAddr]<15..0>;
+		setR(dest, coerce(word,data));
 	}
 
 op lhu(offset: int(12), base: reg_t, dest: reg_t)
@@ -64,7 +67,8 @@ op lhu(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		setR(dest, coerce(duword, M16[vAddr]));
+		let data = M32[vAddr]<15..0>
+		setR(dest, coerce(uword,data));
 	}
 
 op lw(offset: int(12), base: reg_t, dest: reg_t)
@@ -72,8 +76,8 @@ op lw(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		let memword = M32[vAddr];
-		setR(dest, memword);
+		let memword = M32[vAddr]<31..0>;
+		setR(dest, coerce(word,memword));
 	}
 	
 
@@ -83,11 +87,8 @@ op sb(offset: int(12), src: reg_t, base: reg_t)
 	image  = format("%7b %s %s 000 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = offset + R[base];
-		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
-		pAddr = pAddr<31..2> :: (pAddr<1..0> ^ (ReverseEndian :: ReverseEndian));
-		let byte = vAddr<1..0> ^ (BigEndianCPU :: BigEndianCPU);
-		let dataword = R[src];
-		StoreMemoryBYTE(uncached, dataword, pAddr + 8*byte, vAddr);
+		let databyte = R[src]<7..0>;
+		M32[vAddr] = coerce(word,databyte);
 	}
 
 op sh(offset: int(12), src: reg_t, base: reg_t)
@@ -105,8 +106,7 @@ op sw(offset: int(12), src: reg_t, base: reg_t)
 	image  = format("%7b %s %s 010 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = offset + R[base];
-		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
-		let dataword = R[src];
-		StoreMemoryWORD(uncached, dataword, pAddr, vAddr);
+		let dataword = R[src]<31..0>;
+		M32[vAddr] = coerce(word,dataword);
 	}
 

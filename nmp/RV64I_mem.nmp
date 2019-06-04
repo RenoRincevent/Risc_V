@@ -34,7 +34,7 @@ op ld(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 011 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		setR(dest, M64[vAddr]);
+		setR(dest, coerce(word,M32[vAddr]<63..0>));
 	}
 
 op lwu(offset: int(12), base: reg_t, dest: reg_t)
@@ -42,7 +42,7 @@ op lwu(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 110 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		setR(dest, coerce(duword, M32[vAddr]));
+		setR(dest, coerce(uword, M32[vAddr]<31..0>));
 	}
 
 
@@ -52,8 +52,7 @@ op sd(offset: int(12), src: reg_t, base: reg_t)
 	image  = format("%7b %s %s 011 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = offset + R[base];
-		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
-		let datadouble = R[src];
-		StoreMemoryDOUBLEWORD(uncached, datadouble, pAddr, vAddr);
+		let datadouble = R[src]<63..0>;
+		M32[vAddr] = coerce(word,datadouble);
 	}
 
