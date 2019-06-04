@@ -33,11 +33,12 @@ extern  "C" {
 #define GLISS_EMU_DESTROY(s)
 
 #define BreakPoint		0
-#define	IntegerOverflow	1
-#define AddressError	2
+#define	IntegerOverflow		1
+#define AddressError		2
 #define SystemCall		3
 #define Trap			4
-#define InvalidOperation 5
+#define InvalidOperation 	5
+#define IllegalInstruction	6
 
 void Prefetch(int uncached, int32_t pAddr, int32_t vAddr, int IorD, int hint);
 void SignalException(int exception);

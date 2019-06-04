@@ -82,7 +82,7 @@ mode reg_t (r: index) = r
 		case 31:	"t6"
 		}
 	image  = format ( "%5b", r )
-macro setR(d, v) = if d != 0 then R[d] = v; endif 
+macro setR64(d, v) = if d != 0 then R64[d] = v; endif 
 
 mode freg_t (f: index) = f
 	num = f
@@ -140,9 +140,8 @@ op instruction (x: allinstr)
 	syntax = x.syntax
 	image = x.image
 	action = {
-		NPC = PC + 4;
 		x.action;
-		PC = NPC;
+		PC = PC + 4;
 	}
 
 op allinstr =
