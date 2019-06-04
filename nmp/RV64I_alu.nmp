@@ -37,23 +37,26 @@ op addiw(imm: int(12), src: reg_t, dest: reg_t)
 	syntax = format("addiw %s, %s, %l", dest, src, imm)
 	image = format("%12b %s 000 %s 0011011", imm, src, dest)
 	action = {
-		// empty, no simulation
+		setR64(dest, coerce(dword,(R64[src]+imm)<31..0>));
 	}
 
+//TODO Only legal when shamt<5..5>=0
 op slliw(shamt: card(5), src: reg_t, dest: reg_t)
 	syntax = format("slliw %s, %s, %l", dest, src, shamt)
 	image = format("0000000 %5b %s 001 %s 0011011", shamt, src, dest)
 	action = {
-		// empty, no simulation
+		setR64(dest, coerce(dword,(R64[src] << shamt)<31..0>) );
 	}
 
+//TODO Only legal when shamt<5..5>=0
 op srliw(shamt: card(5), src: reg_t, dest: reg_t)
 	syntax = format("srliw %s, %s, %l", dest, src, shamt)
 	image = format("0000000 %5b %s 101 %s 0011011", shamt, src, dest)
 	action = {
-		// empty, no simulation
+		setR64(dest,coerce(dword, R64[src]<31..0> >> shamt) );
 	}
 
+//TODO Only legal when shamt<5..5>=0
 op sraiw(shamt: card(5), src: reg_t, dest: reg_t)
 	syntax = format("sraiw %s, %s, %l", dest, src, shamt)
 	image = format("0100000 %5b %s 101 %s 0011011", shamt, src, dest)
@@ -65,14 +68,14 @@ op addw(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sllw %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 000 %s 0111011", src2, src1, dest)
 	action = {
-		// empty, no simulation
+		setR64(dest, coerce(dword,((R64[src1]+R64[src2])<31..0>)));
 	}
 
 op subw(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sllw %s, %s, %s", dest, src1, src2)
 	image = format("0100000 %s %s 000 %s 0111011", src2, src1, dest)
 	action = {
-		// empty, no simulation
+		setR64(dest, coerce(dword,((R64[src1]-R64[src2])<31..0>)));
 	}
 
 op sllw(src2: reg_t, src1: reg_t, dest: reg_t)

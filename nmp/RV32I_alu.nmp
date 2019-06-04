@@ -117,12 +117,17 @@ op lui(immediate: int(20), dest: reg_t)
 	image  = format("%20b %s 0110111", immediate, dest)
 	action = { setR(dest, coerce(word, immediate) << 12); }
 	
-//// SLLI	
+//// SLLI
+//slli, srli and srai generate an illegal instruction exception if shamt<5..5> != 0.	
 op slli(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("slli %s, %s, %d", dest, src, shamt)
 	image  = format("000000 %6b %s 001 %s 0010011", shamt, src, dest)
 	action = {
-		R[dest] = R[src] << shamt;
+		if shamt<5..5> != 0 then
+			SignalException(IllegalInstruction);
+		else
+			setR(dest,R[src] << shamt);
+		endif;
 	}
 	
 //// SRLI	
@@ -130,15 +135,24 @@ op srli(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("srli %s, %s, %d", dest, src, shamt)
 	image  = format("000000 %6b %s 101 %s 0010011", shamt, src, dest)
 	action = {
-		R[dest] = coerce(uword, R[src]) >> shamt;
+		if shamt<5..5> != 0 then
+			SignalException(IllegalInstruction);
+		else
+			setR(dest, coerce(uword, R[src]) >> shamt);
+		endif;
 	}
 
-//// SRAI		
+//// SRAI	
+//TODO generate an illegal instruction exception if shamt<5..5> != 0.	
 op srai(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("srai %s, %s, %d", dest, src, shamt)
 	image  = format("010000 %6b %s 101 %s 0010011", shamt, src, dest)
 	action = {
-		R[dest] = coerce(word, R[src]) >> shamt;
+		if shamt<5..5> != 0 then
+			SignalException(IllegalInstruction);
+		else		
+			setR(dest, coerce(word, R[src]) >> shamt);
+		endif;
 	}
 
 //// AUIPC		
