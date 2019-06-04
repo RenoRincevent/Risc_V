@@ -1,0 +1,43 @@
+/*
+ *	MIPS IV Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2016, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+
+
+// state
+mem M   [32,  byte]
+mem M16	[32,  half] alias = M
+mem M32	[32,  word] alias = M
+mem M64	[32,  dword] alias = M
+mem M32F [32, real] alias = M
+mem M32D [32,doublef] alias = M
+
+reg PC  	[ 1, address] is_pc = 1
+reg NPC 	[ 1, address]
+reg R		[32, dword]
+reg F		[32, float(23,9)]
+reg D		[32, doublef]
+reg LLbit	[ 1, card(1)]
+reg FCSR	[ 1, word]
+reg FFLAGS	[ 1, address]
+reg FRM		[ 1, address]
+
+
+

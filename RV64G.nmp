@@ -20,7 +20,7 @@
  */
 
 include "nmp/config.nmp"
-include "nmp/state.nmp"
+include "nmp/state64.nmp"
 include "nmp/macros.nmp"
 
 // GLISS configuration
@@ -82,7 +82,7 @@ mode reg_t (r: index) = r
 		case 31:	"t6"
 		}
 	image  = format ( "%5b", r )
-macro setR64(d, v) = if d != 0 then R64[d] = v; endif 
+macro setR(d, v) = if d != 0 then R[d] = v; endif 
 
 mode freg_t (f: index) = f
 	num = f
@@ -160,6 +160,7 @@ op allinstr =
 	| all_floating
 	| rv32a // atomic operations 32 bits
 	| rv64a // atomic operations 64 bits
+	| rv64i
 
 op init ()
 	action = {
