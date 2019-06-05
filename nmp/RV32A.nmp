@@ -167,7 +167,7 @@ op amomin_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		let condition = t < R[src];
 		if condition then
 			let result = t;
-		else				//Dans les ref: utilisation du complément à deux pour chercher le min
+		else				
 			let result = R[src];
 		endif;
 		  	
@@ -191,7 +191,7 @@ op amomax_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		let condition = t > R[src];
 		if condition then
 			let result = t;
-		else				//Dans les ref: utilisation du complément à deux pour chercher le max
+		else				
 			let result = R[src];
 		endif;
 
@@ -209,8 +209,8 @@ op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		let vAddr = R[addr];
 		let t = M32[vAddr];	
 
-		let tu = coerce(card(32),t);
-		let valSrcU = coerce(card(32),R[src]);	
+		let tu = coerce(uword,t);
+		let valSrcU = coerce(uword,R[src]);	
 
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
 		
@@ -235,8 +235,8 @@ op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		let vAddr = R[addr];
 		let t = M32[vAddr];	
 
-		let tu = coerce(card(32),t);
-		let valSrcU = coerce(card(32),R[src]);	
+		let tu = coerce(uword,t);
+		let valSrcU = coerce(uword,R[src]);	
 
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
 		
