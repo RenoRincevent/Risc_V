@@ -43,7 +43,7 @@ op lr_w(aq: bool, rl: bool, addr: reg_t,dest: reg_t)
 	image  = format("00010 %1b %1b 00000 %s 010 %s 0101111", aq, rl, addr, dest)
 	action = {
 		let vAddr = R[addr];
-		setR(dest,M32[vAddr]);
+		setR(dest,M32[vAddr]<31..0>);
 		reserve(M32[vAddr]);
 	}
 
@@ -52,7 +52,7 @@ op sc_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 	syntax = format("sc.w %s, %s, (%s)", dest, src, addr) 
 	image  = format("00011 %1b %1b %s %s 010 %s 0101111", aq, rl, src, addr, dest)
 	action = {
-		let value = R[src];
+		let value = R[src]<31..0>;
 		let vAddr = R[addr];
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
 		if(reserved(M32[vAddr])) then
@@ -73,14 +73,14 @@ op amoswap_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// set memory word t to R[rs2]
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
-		let result = R[src];
+		let result = R[src]<31..0>;
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amoadd_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -91,14 +91,14 @@ op amoadd_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if rl then release(); endif;
 
 		let vAddr = R[addr];		// address in R[rs1]
-		let t = M32[vAddr];		// t : memory word at address vAddr
+		let t = M32[vAddr]<31..0>;		// t : memory word at address vAddr
 		
 		// memory word t take the value t + R[rs2]
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
-		let result = t + R[src];
+		let result = t + R[src]<31..0>;
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);			// set rd to the sign extension of t
+		setR(dest,coerce(word,t));			// set rd to the sign extension of t
 	}
 
 op amoxor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -108,14 +108,14 @@ op amoxor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// memory word t take the value (t ^ R[rs2])
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
-		let result = t ^ R[src];
+		let result = t ^ R[src]<31..0>;
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amoand_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -125,14 +125,14 @@ op amoand_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// memory word t take the value (t & R[rs2])
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
-		let result = t & R[src];
+		let result = t & R[src]<31..0>;
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amoor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t,  dest: reg_t)
@@ -142,14 +142,14 @@ op amoor_w(aq: bool, rl: bool, src: reg_t, addr: reg_t,  dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// memory word t take the value (t | R[rs2])
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
-		let result = t | R[src];
+		let result = t | R[src]<31..0>;
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amomin_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -159,21 +159,21 @@ op amomin_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// memory word t take the value (t MIN R[rs2])
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
 		
-		let condition = t < R[src];
+		let condition = t < R[src]<31..0>;
 		if condition then
 			let result = t;
 		else				
-			let result = R[src];
+			let result = R[src]<31..0>;
 		endif;
 		  	
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amomax_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -183,21 +183,21 @@ op amomax_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];		
+		let t = M32[vAddr]<31..0>;		
 
 		// memory word t take the value (t MAX R[rs2])
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
 		
-		let condition = t > R[src];
+		let condition = t > R[src]<31..0>;
 		if condition then
 			let result = t;
 		else				
-			let result = R[src];
+			let result = R[src]<31..0>;
 		endif;
 
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -207,10 +207,10 @@ op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];	
+		let t = M32[vAddr]<31..0>;	
 
 		let tu = coerce(uword,t);
-		let valSrcU = coerce(uword,R[src]);	
+		let valSrcU = coerce(uword,R[src]<31..0>);	
 
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
 		
@@ -223,7 +223,7 @@ op amominu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
 
 op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
@@ -233,10 +233,10 @@ op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
 		if aq then aquirement(); endif;
 		if rl then release(); endif;
 		let vAddr = R[addr];
-		let t = M32[vAddr];	
+		let t = M32[vAddr]<31..0>;	
 
 		let tu = coerce(uword,t);
-		let valSrcU = coerce(uword,R[src]);	
+		let valSrcU = coerce(uword,R[src]<31..0>);	
 
 		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);		
 		
@@ -249,5 +249,5 @@ op amomaxu_w(aq: bool, rl: bool, src: reg_t, addr: reg_t, dest: reg_t)
    
 		StoreMemoryWORD(uncached, result, pAddr, vAddr);	
 		
-		setR(dest,t);
+		setR(dest,coerce(word,t));
 	}
