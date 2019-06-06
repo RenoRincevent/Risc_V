@@ -43,6 +43,9 @@ let proc = "RV32G"
 let bit_order = "uppermost"
 let gliss_isize = "32"
 
+//let XLEN = 32
+// tester : let WORD_SIZE = 32
+
 
 
 //let bit_image_order =  1

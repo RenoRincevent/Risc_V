@@ -40,17 +40,16 @@ op lb(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		let data = M32[vAddr]<7..0>
+		let data = M32[vAddr]<7..0>;
 		setR(dest, coerce(word, data));
 	}
 
-op lbu(offset: int(12), base: reg_t, dest: reg_t)
+op lbu(offset: int(12), base: reg_t, dest: reg_t) //DONE
 	syntax = format("lbu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		let data = M32[vAddr]<7..0>
-		setR(dest, coerce(uword, data));
+		setR(dest, coerce(uword, M[vAddr]));
 	}
 
 op lh(offset: int(12), base: reg_t, dest: reg_t)
@@ -67,7 +66,7 @@ op lhu(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		let data = M32[vAddr]<15..0>
+		let data = M32[vAddr]<15..0>;
 		setR(dest, coerce(uword,data));
 	}
 
@@ -82,13 +81,16 @@ op lw(offset: int(12), base: reg_t, dest: reg_t)
 	
 
 // store instructions
-op sb(offset: int(12), src: reg_t, base: reg_t)
+op sb(offset: int(12), src: reg_t, base: reg_t) //DONE
 	syntax = format("sb %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 000 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = offset + R[base];
 		let databyte = R[src]<7..0>;
-		M32[vAddr] = coerce(word,databyte);
+		/* DEBUG */
+		"printf"("M[%08X]: %08X\n",vAddr,databyte);
+		/*********/
+		M[vAddr] = databyte;
 	}
 
 op sh(offset: int(12), src: reg_t, base: reg_t)
