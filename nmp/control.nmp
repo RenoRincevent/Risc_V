@@ -45,7 +45,7 @@ op jal(offset: int(20), dest: reg_t)
 	image = format("%1b %10b %1b %8b %s 1101111", offset<19..19>, offset<9..0>, offset<10..10>, offset<18..11>, dest)
 	action = {
 		if dest != 0 then R[dest] = PC + 4; endif;
-		NPC = NPC + tgt_offset;
+		NPC = PC + tgt_offset;
 	}
 
 //// JALR, JR, RET
@@ -63,7 +63,7 @@ op jalr(offset: int(12), base: reg_t, dest: reg_t)
 	action = {
 		if dest != 0 then R[dest] = PC + 4; endif;
 		let tgt_offset = coerce(int(32), offset);
-		NPC = NPC + tgt_offset + R[base];
+		NPC = PC + tgt_offset + R[base];
 	}
 
 
@@ -83,7 +83,7 @@ op beq(src2: reg_t, src1: reg_t, offset: int(12))
 	action = {
 		let condition = R[src1] == R[src2];
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
@@ -101,7 +101,7 @@ op bne(src2: reg_t, src1: reg_t, offset: int(12))
 	action = {
 		let condition = R[src1] != R[src2];
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
@@ -119,7 +119,7 @@ op blt(src2: reg_t, src1: reg_t, offset: int(12))
 	action = {
 		let condition = R[src1] < R[src2];
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
@@ -129,9 +129,9 @@ op bltu(src2: reg_t, src1: reg_t, offset: int(12))
 	syntax = format("bltu %s, %s, %l", src1, src2, __IADDR + tgt_offset)
 	image = format("%1b %6b %s %s 110 %4b %1b 1100011", offset<11..11>, offset<9..4>, src2, src1, offset<3..0>, offset<10..10>)
 	action = {
-		let condition = coerce(card(32), R[src1]) < coerce(card(32), R[src2]);
+		let condition = coerce(uword, R[src1]) < coerce(uword, R[src2]);
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
@@ -149,7 +149,7 @@ op bge(src2: reg_t, src1: reg_t, offset: int(12))
 	action = {
 		let condition = R[src1] >= R[src2];
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
@@ -162,7 +162,7 @@ op bgeu(src2: reg_t, src1: reg_t, offset: int(12))
 	action = {
 		let condition = coerce(card(32), R[src1]) >= coerce(card(32), R[src2]);
 		if condition then
-			NPC = NPC + tgt_offset;
+			NPC = PC + tgt_offset;
 		endif;
 	}
 
