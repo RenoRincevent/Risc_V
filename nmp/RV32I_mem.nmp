@@ -40,8 +40,7 @@ op lb(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = R[base] + offset;
-		let data = M32[vAddr]<7..0>;
-		setR(dest, coerce(word, data));
+		setR(dest, coerce(word, M[vAddr]));
 	}
 
 op lbu(offset: int(12), base: reg_t, dest: reg_t) //DONE
@@ -57,26 +56,23 @@ op lh(offset: int(12), base: reg_t, dest: reg_t)
 	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		let data = M32[vAddr]<15..0>;
-		setR(dest, coerce(word,data));
+		setR(dest, coerce(word,M16[vAddr]));
 	}
 
-op lhu(offset: int(12), base: reg_t, dest: reg_t)
+op lhu(offset: int(12), base: reg_t, dest: reg_t) //DONE
 	syntax = format("lhu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		let data = M32[vAddr]<15..0>;
-		setR(dest, coerce(uword,data));
+		setR(dest, coerce(uword,M16[vAddr]));
 	}
 
-op lw(offset: int(12), base: reg_t, dest: reg_t)
+op lw(offset: int(12), base: reg_t, dest: reg_t) //DONE
 	syntax = format("lw %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
 	action = {
 		let vAddr = offset + R[base];
-		let memword = M32[vAddr]<31..0>;
-		setR(dest, coerce(word,memword));
+		setR(dest, coerce(word,M32[vAddr]));
 	}
 	
 
@@ -88,22 +84,21 @@ op sb(offset: int(12), src: reg_t, base: reg_t) //DONE
 		let vAddr = offset + R[base];
 		let databyte = R[src]<7..0>;
 		/* DEBUG */
-		"printf"("M[%08X]: %08X\n",vAddr,databyte);
+		//"printf"("M[%08X]: %08X\n",vAddr,databyte);
 		/*********/
 		M[vAddr] = databyte;
 	}
 
-op sh(offset: int(12), src: reg_t, base: reg_t)
+op sh(offset: int(12), src: reg_t, base: reg_t) //DONE
 	syntax = format("sh %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 001 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = offset + R[base];
-		AddressTranslation(pAddr, uncached, vAddr, DATA, STORE);
-		let halfword = R[src];
-		StoreMemoryHALFWORD(uncached, halfword, pAddr, vAddr);
+		let databyte = R[src]<15..0>;
+		M16[vAddr] = databyte;
 	}
 
-op sw(offset: int(12), src: reg_t, base: reg_t)
+op sw(offset: int(12), src: reg_t, base: reg_t) //DONE
 	syntax = format("sw %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 010 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
