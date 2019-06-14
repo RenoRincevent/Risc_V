@@ -64,7 +64,7 @@ op addi(imm: int(12), src: reg_t, dest: reg_t) //DONE
 		endif endif endif
 	image = format("%12b %s 000 %s 0010011", imm, src, dest)
 	action = {	
-		setR(dest, R[src] + imm);
+		setR(dest, R[src] + coerce(word,imm));
 	}
 	
 //// SLTI
@@ -88,7 +88,7 @@ op andi(imm: int(12), src: reg_t, dest: reg_t) //DONE
 	syntax = format("andi %s, %s, %d", dest, src, imm)
 	image = format("%12b %s 111 %s 0010011", imm, src, dest)
 	action = {
-		setR(dest, R[src] & imm);
+		setR(dest, R[src] & coerce(word,imm));
 	}
 	
 //// ORI
@@ -96,7 +96,7 @@ op ori(imm: int(12), src: reg_t, dest: reg_t) //DONE
 	syntax = format("ori %s, %s, %d", dest, src, imm)
 	image = format("%12b %s 110 %s 0010011", imm, src, dest)
 	action = {	
-		setR(dest, R[src] | imm);
+		setR(dest, R[src] | coerce(word,imm));
 	}
 
 //// XORI, NOT
@@ -108,7 +108,7 @@ op xori(imm: int(12), src: reg_t, dest: reg_t)
 		endif
 	image = format("%12b %s 100 %s 0010011", imm, src, dest)
 	action = {	
-		setR(dest, R[src] ^ imm);
+		setR(dest, R[src] ^ coerce(word,imm));
 	}
 	
 //// LUI	
@@ -222,9 +222,13 @@ op sll(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sll %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 001 %s 0110011", src2, src1, dest)
 	action = {
-		let s = src2<4..0>;
-		let temp = R[src1] << s;
-		R[dest] = temp;
+		if dest == 0 then
+			R[dest] = 0;
+		else
+			let s = R[src2]<4..0>;
+			let temp = R[src1] << s;
+			R[dest] = temp;
+		endif;
 	}
 	
 //// SRL
@@ -232,9 +236,13 @@ op srl(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("srl %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 101 %s 0110011", src2, src1, dest)
 	action = {
-		let s = src2<4..0>;
-		let temp = coerce(uword, R[src1]) >> s;
-		R[dest] = temp;
+		if dest == 0 then
+			R[dest] = 0;
+		else
+			let s = R[src2]<4..0>;
+			let temp = coerce(uword, R[src1]) >> s;
+			R[dest] = temp;
+		endif;
 	}
 
 //// SUB, NEG	
@@ -254,7 +262,11 @@ op sra(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sra %s, %s, %s", dest, src1, src2)
 	image = format("0100000 %s %s 101 %s 0110011", src2, src1, dest)
 	action = {
-		let s = src2<4..0>;
-		let temp = coerce(word, R[src1]) >> s;
-		R[dest] = temp;
+		if dest == 0 then
+			R[dest] = 0;
+		else
+			let s = R[src2]<4..0>;
+			let temp = coerce(word, R[src1]) >> s;
+			R[dest] = temp;
+		endif;
 	}

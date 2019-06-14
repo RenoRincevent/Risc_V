@@ -24,6 +24,7 @@
 // state
 mem M   [32,  byte]
 mem M16	[32,  half] alias = M
+//changer M32 en MWord pour plus de lisibilité pour rv64
 mem M32	[32,  word] alias = M
 mem M64	[32,  dword] alias = M
 mem M32F [32, real] alias = M
