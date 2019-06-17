@@ -89,7 +89,7 @@ op sltiu(imm: int(12), src: reg_t, dest: reg_t)
 	image = format("%12b %s 011 %s 0010011", imm, src, dest)	
 	action = {
 		if dest != 0 then 
-			setR(dest, if coerce(uword, R[src]) < coerce(uword, imm) then 1 else 0 endif); 
+			setR(dest, if coerce(uword,R[src]) < coerce(uword,imm<31..0>) then 1 else 0 endif); 
 		endif;	
 	}
 
