@@ -60,33 +60,46 @@ op mulhu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
 	syntax = format("mulhu %s, %s, %s", dest, multiplicand, multiplier)
 	image = format("0000001 %s %s 011 %s 0110011", multiplier, multiplicand, dest)
 	action = {
-		let prod: card(64) = coerce(card(64), R[multiplier]) * coerce(card(64), R[multiplicand]);
+		let r2 = coerce(card(64),R[multiplier]); //transforme la valeur dans le registre en unsigned 64 bits
+		r2 = coerce(card(64),(r2 << 32)) >> 32;	//*************************************
+		let r1 = coerce(card(64),R[multiplicand]);
+		r1 = coerce(card(64),(r1 << 32)) >> 32;
+		let prod: card(64) = r1 * r2;
 		setR(dest, prod<63..32>);
 	}
 	
-	// doc : rs1 signé, rs2 non signé ? ou l'inverse ? A VERIFIER DANS UN SIMULATEUR
-	// nmp action : rs2 signé, rs1 non signé
+	//multiplicand : rs1(signé); multiplier: rs2(non signé)
 op mulhsu(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
 	syntax = format("mulhsu %s, %s, %s", dest, multiplicand, multiplier)
 	image = format("0000001 %s %s 010 %s 0110011", multiplier, multiplicand, dest)
 	action = {
-		let prod: int(64) = coerce(card(64), R[multiplier]) * coerce(int(64), R[multiplicand]);
+		let rNonSigne = coerce(card(64),R[multiplier]);
+		rNonSigne = coerce(card(64),(rNonSigne << 32)) >> 32;
+		let prod: int(64) = coerce(int(64), R[multiplicand]) * rNonSigne;
 		setR(dest, prod<63..32>);
 	} 
 	
 	
 	
 	
-
+//divisor: rs2, dividend: rs1
 op div(divisor: reg_t, dividend: reg_t, dest: reg_t)
 	syntax = format("div %s, %s, %s", dest, dividend, divisor)
 	image = format("0000001 %s %s 100 %s 0110011", divisor, dividend, dest)
 	action = {
-		if R[divisor] == 0
-		then setR(dest, -1); else if R[divisor] == -1 && R[dividend] == 0x8000000
-		then setR(dest, R[dividend]);
-		else setR(dest, R[dividend] / R[divisor]);
-		endif; endif;
+		"printf"("diviseur: %08X; \tdividende: %08x\n",R[divisor],R[dividend]);
+		if R[divisor] == 0 then 
+			"printf"("division par zero\n");
+			setR(dest, -1); 
+		else 
+			if R[divisor] == -1 && R[dividend] == 0x80000000 then
+				"printf"("-inf / -1 \n"); 
+				setR(dest, R[dividend]);
+			else 
+				"printf"("division normal\n");
+				setR(dest, R[dividend] / R[divisor]);
+			endif; 
+		endif;
 	} 
 
 op divu(divisor: reg_t, dividend: reg_t, dest: reg_t)
@@ -104,7 +117,7 @@ op rem(divisor: reg_t, dividend: reg_t, dest: reg_t)
 	image = format("0000001 %s %s 110 %s 0110011", divisor, dividend, dest)
 	action = {
 		if R[divisor] == 0
-		then setR(dest, R[dividend]); else if R[divisor] == -1 && R[dividend] == 0x8000000
+		then setR(dest, R[dividend]); else if R[divisor] == -1 && R[dividend] == 0x80000000
 		then setR(dest, 0);
 		else setR(dest, R[dividend] % R[divisor]);
 		endif; endif;

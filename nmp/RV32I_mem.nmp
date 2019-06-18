@@ -35,19 +35,35 @@ op all_stores_32 =
 	| sw
 
 // load instructions
+//TODO tester si offset negatif
 op lb(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lb %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base] + offset;
-		setR(dest, coerce(word, M[vAddr]));
+		let vAddr = R[base];
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
+		let data = M[vAddr];
+		setR(dest, data<31..0>);
 	}
 
-op lbu(offset: int(12), base: reg_t, dest: reg_t) //DONE
+op lbu(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lbu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base] + offset;
+		let vAddr = R[base];
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		setR(dest, coerce(uword, M[vAddr]));
 	}
 
@@ -55,55 +71,95 @@ op lh(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lh %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = offset + R[base];
-		setR(dest, coerce(word,M16[vAddr]));
+		let vAddr = R[base];
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
+		let data = M16[vAddr];
+		setR(dest, data<31..0>);
 	}
 
-op lhu(offset: int(12), base: reg_t, dest: reg_t) //DONE
+op lhu(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lhu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = offset + R[base];
+		let vAddr = R[base];
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		setR(dest, coerce(uword,M16[vAddr]));
 	}
 
-op lw(offset: int(12), base: reg_t, dest: reg_t) //DONE
+op lw(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lw %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = offset + R[base];
+		let vAddr = R[base];
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		setR(dest, coerce(word,M32[vAddr]));
 	}
 	
 
 // store instructions
-op sb(offset: int(12), src: reg_t, base: reg_t) //DONE
+op sb(offset: int(12), src: reg_t, base: reg_t)
 	syntax = format("sb %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 000 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
-		let vAddr = offset + R[base];
+		let vAddr = R[base];
 		let databyte = R[src]<7..0>;
-		/* DEBUG */
-		//"printf"("M[%08X]: %08X\n",vAddr,databyte);
-		/*********/
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		M[vAddr] = databyte;
 	}
 
-op sh(offset: int(12), src: reg_t, base: reg_t) //DONE
+op sh(offset: int(12), src: reg_t, base: reg_t)
 	syntax = format("sh %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 001 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
-		let vAddr = offset + R[base];
+		let vAddr = R[base];
 		let databyte = R[src]<15..0>;
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		M16[vAddr] = databyte;
 	}
 
-op sw(offset: int(12), src: reg_t, base: reg_t) //DONE
+op sw(offset: int(12), src: reg_t, base: reg_t)
 	syntax = format("sw %s, %d(%s)", src, offset, base)
 	image  = format("%7b %s %s 010 %5b 0100011", offset<11..5>, src, base, offset<4..0>)
 	action = {
-		let vAddr = offset + R[base];
+		let vAddr = R[base];
 		let dataword = R[src]<31..0>;
+		if offset<11..11> == 1 then //nombre negatif => complement a deux
+			offset = offset - 1;
+			offset = ~offset;
+			vAddr = vAddr - offset<10..0>;
+		else
+			vAddr = vAddr + offset;
+		endif;
 		M32[vAddr] = coerce(word,dataword);
 	}
 
