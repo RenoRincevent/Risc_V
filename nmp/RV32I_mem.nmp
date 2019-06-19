@@ -40,77 +40,89 @@ op lb(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lb %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base];
-		if offset<11..11> == 1 then //nombre negatif => complement a deux
-			offset = offset - 1;
-			offset = ~offset;
-			vAddr = vAddr - offset<10..0>;
-		else
-			vAddr = vAddr + offset;
+		if dest != 0 then
+			let vAddr = R[base];
+			if offset<11..11> == 1 then //nombre negatif => complement a deux
+				offset = offset - 1;
+				offset = ~offset;
+				vAddr = vAddr - offset<10..0>;
+			else
+				vAddr = vAddr + offset;
+			endif;
+			let data = M[vAddr];
+			setR(dest, data<31..0>);
 		endif;
-		let data = M[vAddr];
-		setR(dest, data<31..0>);
 	}
 
 op lbu(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lbu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 100 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base];
-		if offset<11..11> == 1 then //nombre negatif => complement a deux
-			offset = offset - 1;
-			offset = ~offset;
-			vAddr = vAddr - offset<10..0>;
-		else
-			vAddr = vAddr + offset;
+		if dest != 0 then
+			let vAddr = R[base];
+			if offset<11..11> == 1 then //nombre negatif => complement a deux
+				offset = offset - 1;
+				offset = ~offset;
+				vAddr = vAddr - offset<10..0>;
+			else
+				vAddr = vAddr + offset;
+			endif;
+			setR(dest, coerce(uword, M[vAddr]));
 		endif;
-		setR(dest, coerce(uword, M[vAddr]));
 	}
 
 op lh(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lh %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 001 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base];
-		if offset<11..11> == 1 then //nombre negatif => complement a deux
-			offset = offset - 1;
-			offset = ~offset;
-			vAddr = vAddr - offset<10..0>;
-		else
-			vAddr = vAddr + offset;
+		if dest != 0 then
+			let vAddr = R[base];
+			if offset<11..11> == 1 then //nombre negatif => complement a deux
+				offset = offset - 1;
+				offset = ~offset;
+				vAddr = vAddr - offset<10..0>;
+			else
+				vAddr = vAddr + offset;
+			endif;
+			let data = M16[vAddr];
+			setR(dest, data<31..0>);
 		endif;
-		let data = M16[vAddr];
-		setR(dest, data<31..0>);
 	}
 
 op lhu(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lhu %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 101 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base];
-		if offset<11..11> == 1 then //nombre negatif => complement a deux
-			offset = offset - 1;
-			offset = ~offset;
-			vAddr = vAddr - offset<10..0>;
-		else
-			vAddr = vAddr + offset;
+		if dest != 0 then
+			let vAddr = R[base];
+			if offset<11..11> == 1 then //nombre negatif => complement a deux
+				offset = offset - 1;
+				offset = ~offset;
+				vAddr = vAddr - offset<10..0>;
+			else
+				vAddr = vAddr + offset;
+			endif;
+			setR(dest, coerce(uword,M16[vAddr]));
 		endif;
-		setR(dest, coerce(uword,M16[vAddr]));
 	}
 
 op lw(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lw %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 010 %s 0000011", offset, base, dest)
 	action = {
-		let vAddr = R[base];
-		if offset<11..11> == 1 then //nombre negatif => complement a deux
-			offset = offset - 1;
-			offset = ~offset;
-			vAddr = vAddr - offset<10..0>;
-		else
-			vAddr = vAddr + offset;
+		if dest != 0 then 
+			let vAddr = R[base];
+			if offset<11..11> == 1 then //nombre negatif => complement a deux
+				offset = offset - 1;
+				offset = ~offset;
+				vAddr = vAddr - offset<10..0>;
+			else
+				vAddr = vAddr + offset;
+			endif;
+			"printf"("recuperation du mot memoire a l addresse %08X\n",vAddr);
+			"printf"("valeur du mot memoire: %08X\n",M32[vAddr]);
+			setR(dest, coerce(word,M32[vAddr]));
 		endif;
-		setR(dest, coerce(word,M32[vAddr]));
 	}
 	
 
@@ -161,5 +173,7 @@ op sw(offset: int(12), src: reg_t, base: reg_t)
 			vAddr = vAddr + offset;
 		endif;
 		M32[vAddr] = coerce(word,dataword);
+		"printf"("valeur mise en memoire: %08X\n",coerce(word,dataword));
+		"printf"("valeur avant convertion: %08X\n",dataword);
 	}
 
