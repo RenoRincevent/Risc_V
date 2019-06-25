@@ -33,6 +33,7 @@ type address   = card(32)
 type index     = card( 5)
 type real      = float(23,9)
 type doublef   = float(52,12)
+type indexCSR	= card(12)
 
 include "nmp/config.nmp"
 include "nmp/state.nmp"
@@ -130,9 +131,21 @@ mode freg_t (f: index) = f
 		case 31:	"f31"
 		}
 	image  = format ( "%5b", f )
-macro setF(d, v) = if d != 0 then F[d] = v; endif 
-macro setD(d, v) = if d != 0 then D[d] = v; endif
+macro setF(d, v) = F[d] = v; 
+macro setD(d, v) = D[d] = v;
 
+mode CSRs (i: indexCSR) = i
+	num = i
+	syntax =
+		switch (i) {
+		case 1: "fflags"
+		case 2: "frm"
+		case 3: "fcsr"
+		case 768: "mstatus"
+		default: "unknown"
+		}
+	image = format ("%12b",i)
+macro setCSRS(d, v) = CSRS[d] = v;
 
 mode IMM16(n: half) = n
 	syntax = format("#%d", n)
@@ -170,6 +183,7 @@ op allinstr =
 
 op init ()
 	action = {
+		notReserve();
 		R[0] = 0;
 	}
 	

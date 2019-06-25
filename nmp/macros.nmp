@@ -28,9 +28,10 @@ canon "SyncOperation"(stype: card(5))
 canon "aquirement"()
 canon "release"()
 canon float(23,9) "rounding"(result: float(23,9), rm: card(3))
+canon "notReserve"()
 canon "reserve"(memoryWord: int(32))
 canon uword "reserved"(memoryWord: int(32))
-canon float(23,9) "fsqrt32"(src: float(23,9))
+canon float(52,12) "fsqrt32"(src: float(52,12))
 canon float(52,12) "roundingDouble"(result: float(52,12), rm: int(32))
 canon float(52,12) "fsqrt64"(src: float(52,12))
 
@@ -92,6 +93,7 @@ macro StoreMemoryWORDD(CCA, MemElem, pAddr, vAddr) = M32D[pAddr] = MemElem
 //macro for AMOs instructions
 macro aquirement() = "aquirement"()
 macro release() = "release"()
+macro notReserve() = "notReserve"()
 macro reserve(memoryWord) = "reserve"(memoryWord)
 macro reserved(memoryWord) = "reserved"(memoryWord)
 

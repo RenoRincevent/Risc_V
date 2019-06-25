@@ -81,9 +81,9 @@ op fadd_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		let roundingMod = rm;
 
 		let result = r1+r2;
-		if roundingMod == 7 then
-			roundingMod = FCSR<7..5>;
-		endif;
+		//if roundingMod == 7 then
+		//	roundingMod = FCSR<7..5>;
+		//endif;
 		let resultRound = roundingDouble(result,roundingMod); 
 		setD(dest,resultRound);
 	}
@@ -97,9 +97,9 @@ op fsub_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		let roundingMod = rm;
 
 		let result = r1-r2;
-		if roundingMod == 7 then
-			roundingMod = FCSR<7..5>;
-		endif;
+		//if roundingMod == 7 then
+		//	roundingMod = FCSR<7..5>;
+		//endif;
 		let resultRound = roundingDouble(result,roundingMod); 
 		setD(dest,resultRound);
 	}
@@ -113,9 +113,9 @@ op fmul_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		let roundingMod = rm;
 
 		let result = r1*r2;
-		if roundingMod == 7 then
-			roundingMod = FCSR<7..5>;
-		endif;
+		//if roundingMod == 7 then
+		//	roundingMod = FCSR<7..5>;
+		//endif;
 		let resultRound = roundingDouble(result,roundingMod); 
 		setD(dest,resultRound);
 	}
@@ -126,13 +126,13 @@ op fdiv_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	action = {	
 		let r1 = D[src1];
 		let r2 = D[src2];
-		if r2 == 0 then FCSR<3..3> = 1; endif;
+		//if r2 == 0 then FCSR<3..3> = 1; endif;
 		let roundingMod = rm;
 
 		let result = r1/r2;
-		if roundingMod == 7 then
-			roundingMod = FCSR<7..5>;
-		endif;
+		//if roundingMod == 7 then
+		//	roundingMod = FCSR<7..5>;
+		//endif;
 		let resultRound = roundingDouble(result,roundingMod); 
 		setD(dest,resultRound);
 	}
@@ -231,7 +231,7 @@ op fsqrt_d(src: freg_t, rm: card(3), dest: freg_t)
 		//If D[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
 		if(D[src]<63..63> == 1) then
 			SignalException(InvalidOperation);
-			FCSR<4..4> = 1;
+		//	FCSR<4..4> = 1;
 			setD(dest,Nan);
 			domainError = 0;
 		endif;
@@ -240,9 +240,9 @@ op fsqrt_d(src: freg_t, rm: card(3), dest: freg_t)
 		if(!domainError) then	
 			let result = fsqrt64(D[src]);
 			let roundingMod = rm;
-			if roundingMod == 7 then
-				roundingMod = FCSR<7..5>;
-			endif;
+		//	if roundingMod == 7 then
+		//		roundingMod = FCSR<7..5>;
+		//	endif;
 			let resultRound = roundingDouble(result,roundingMod);
 			setF(dest,resultRound);
 		endif;
@@ -260,13 +260,13 @@ op fmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
 		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-			FCSR<4..4> = 1;
+		//	FCSR<4..4> = 1;
 			SignalException(InvalidOperation);			
 		else
 			let result = r1*r2+r3;
-			if roundingMod == 7 then
-				roundingMod = FCSR<7..5>;
-			endif;
+		//	if roundingMod == 7 then
+		//		roundingMod = FCSR<7..5>;
+		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
 			setD(dest,resultRound); 
 		endif;
@@ -283,13 +283,13 @@ op fmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
 		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-			FCSR<4..4> = 1;
+		//	FCSR<4..4> = 1;
 			SignalException(InvalidOperation);			
 		else
 			let result = r1*r2-r3;
-			if roundingMod == 7 then
-				roundingMod = FCSR<7..5>;
-			endif;
+		//	if roundingMod == 7 then
+		//		roundingMod = FCSR<7..5>;
+		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
 			setD(dest,resultRound); 
 		endif;
@@ -306,13 +306,13 @@ op fnmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
 		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-			FCSR<4..4> = 1;
+		//	FCSR<4..4> = 1;
 			SignalException(InvalidOperation);			
 		else
 			let result = -r1*r2-r3;
-			if roundingMod == 7 then
-				roundingMod = FCSR<7..5>;
-			endif;
+		//	if roundingMod == 7 then
+		//		roundingMod = FCSR<7..5>;
+		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
 			setD(dest,resultRound); 
 		endif;
@@ -329,13 +329,13 @@ op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
 		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-			FCSR<4..4> = 1;
+		//	FCSR<4..4> = 1;
 			SignalException(InvalidOperation);			
 		else
 			let result = -r1*r2+r3;
-			if roundingMod == 7 then
-				roundingMod = FCSR<7..5>;
-			endif;
+		//	if roundingMod == 7 then
+		//		roundingMod = FCSR<7..5>;
+		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
 			setD(dest,resultRound); 
 		endif;
