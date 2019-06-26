@@ -64,8 +64,9 @@ op flw(offset: int(12), base: reg_t, dest: freg_t)
 		else
 			vAddr = vAddr + offset;
 		endif;
-		setF(dest, coerce(float(23,9),M32F[vAddr])) ;
-		"printf"("\tflottant charge: %f\n",F[dest]);
+		F[dest] = 0xffffffff::M32F[vAddr]<31..0>;
+		//setF(dest, coerce(float(23,9),M32F[vAddr])) ;
+		"printf"("\tflottant charge: %f(%08X)\n",F[dest]<31..0>,F[dest]<31..0>);
 	}
 
 //    FSW 
@@ -75,7 +76,7 @@ op fsw(offset: int(12), src: freg_t, base: reg_t)
 	image = format("%7b %s %s 010 %5b 0100111", offset<11..5>, src, base, offset<4..0>)
 	action = {
 		let vAddr = R[base];
-		let data = F[src];	
+		let data : float(23,9) = F[src]<31..0>;	
 		if offset<11..11> == 1 then //nombre negatif => complement a deux
 			offset = offset - 1;
 			offset = ~offset;
@@ -83,7 +84,7 @@ op fsw(offset: int(12), src: freg_t, base: reg_t)
 		else
 			vAddr = vAddr + offset;
 		endif;
-		M32F[vAddr] = data;
+		M32HF[vAddr] = data;
 	}
 
 // fused multiply add/sub
@@ -102,23 +103,27 @@ op fmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t
 	syntax = format("fmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 00 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
 	action = {
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let r3 = coerce(float(52,12),F[src3]);
-		let valInexacte = coerce(float(52,12),F[src1]*F[src2]+F[src3]);
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let f3 : float(23,9) = F[src3]<31..0>;
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let r3 = coerce(float(52,12),f3);
+		let valInexacte = coerce(float(52,12),f1*f2+f3);
 		if (r1*r2+r3) != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
+		//if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
 			//FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			setF(dest,coerce(real,F[src1]*F[src2]+F[src3])); 
-		endif;
-		"printf"("resultat renvoye: %f\n",coerce(real,F[src1])*coerce(real,F[src2])+coerce(real,F[src3]));
+		//	SignalException(InvalidOperation);			
+		//else
+		//	setF(dest,coerce(real,F[src1]*F[src2]+F[src3])); 
+		//endif;
+		F[dest]<31..0> = f1*f2+f3;
+		"printf"("\tresultat renvoye: (%08X)\n",F[dest]<31..0>);
 		
 	}
 
@@ -127,22 +132,18 @@ op fmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t
 	syntax = format("fmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 00 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let r3 = coerce(float(52,12),F[src3]);
-		let valInexacte = coerce(float(52,12),F[src1]*F[src2]-F[src3]);
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let f3 : float(23,9) = F[src3]<31..0>;
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let r3 = coerce(float(52,12),f3);
+		let valInexacte = coerce(float(52,12),f1*f2-f3);
 		if (r1*r2-r3) != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
-			//FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			setF(dest,coerce(real,F[src1]*F[src2]-F[src3])); 
-		endif;
+		F[dest]<31..0> = f1*f2-f3;
 	}
 
 //   FNMADD.S
@@ -150,22 +151,18 @@ op fnegmuladd_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: fre
 	syntax = format("fnmadd.s %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 00 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let r3 = coerce(float(52,12),F[src3]);
-		let valInexacte = coerce(float(52,12),-F[src1]*F[src2]-F[src3]);
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let f3 : float(23,9) = F[src3]<31..0>;
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let r3 = coerce(float(52,12),f3);
+		let valInexacte = coerce(float(52,12),-f1*f2-f3);
 		if (-r1*r2-r3) != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
-			//FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			setF(dest,coerce(real,-F[src1]*F[src2]-F[src3])); 
-		endif;
+		F[dest]<31..0> = -f1*f2-f3;
 	}
 
 //   FNMSUB.S
@@ -173,22 +170,19 @@ op fnegmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: fre
 	syntax = format("fnmsub.s %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 00 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
 	action = {
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let r3 = coerce(float(52,12),F[src3]);
-		let valInexacte = coerce(float(52,12),-F[src1]*F[src2]+F[src3]);
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let f3 : float(23,9) = F[src3]<31..0>;
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let r3 = coerce(float(52,12),f3);
+		let valInexacte = coerce(float(52,12),-f1*f2+f3);
 		if (-r1*r2+r3) != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
+		F[dest]<31..0> = -f1*f2+f3;
 
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<30..23> == 255 && r1<22..0> == 0 && r2 == 0) || (r2<30..23> == 255 && r2<22..0> == 0 && r1 == 0) then
-			//FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			setF(dest,coerce(real,-F[src1]*F[src2]+F[src3])); 
-		endif;
 	}
 
 // Single-Precision Floating-Point Computational Instructions
@@ -197,15 +191,19 @@ op fnegmulsub_s(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: fre
 op fadd_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fadd.s %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s %3b %s 1010011", src2, src1, rm, dest)
-	action = {	
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let valInexacte = coerce(float(52,12),F[src1]+F[src2]);
+	action = {
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let valInexacte = coerce(float(52,12),f1+f2);
 		if r1 + r2 != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-		setF(dest,coerce(float(23,9),F[src1])+coerce(float(23,9),F[src2]));
+		F[dest]<31..0> = f1 + f2;
+		//"printf"("\t%f(%08X) + %f(%08X) = ",f1,f1<31..0>,f2,f2<31..0>);
+		//"printf"("%f(%08X)\n",f1+f2,(f1+f2)<31..0>);
 	}
 
 //    FSUB.S
@@ -213,18 +211,20 @@ op fsub_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fsub.s %s, %s, %s", dest, src1, src2)
 	image = format("0000100 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let valInexacte = coerce(float(52,12),F[src1]-F[src2]);
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let valInexacte = coerce(float(52,12),f1-f2);
 		if r1 - r2 != valInexacte then 
 			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-		setF(dest,coerce(float(23,9),F[src1])-coerce(float(23,9),F[src2]));
-		if (F[src1]<30..23> == 0b11111111) && (F[src1]<30..23> == 0b11111111) then 
+		F[dest]<31..0> = f1 - f2;
+		if (F[src1]<30..23> == 0b11111111) || (F[src2]<30..23> == 0b11111111) then 
 			/* Invalid operation : flag NV = 1 and return nan */			
 			CSRS[1] = 16;
-			setF(dest,0x7FC00000);
+			F[dest]<31..0> = 0x7FC00000;
 		endif;
 	}
 
@@ -233,14 +233,16 @@ op fmul_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmul.s %s, %s, %s", dest, src1, src2)
 	image = format("0001000 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {	
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let valInexacte = coerce(float(52,12),F[src1]*F[src2]);
-		if r1 * r2 != valInexacte then
-			/* Inexact : flag NX = 1 */ 
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let valInexacte = coerce(float(52,12),f1*f2);
+		if r1 * r2 != valInexacte then 
+			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-		setF(dest,coerce(float(23,9),F[src1])*coerce(float(23,9),F[src2]));
+		F[dest]<31..0> = f1 * f2;
 	}
 
 //    FDIV.S
@@ -254,14 +256,16 @@ op fdiv_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 			//return nan or infinite ? 
 		//endif;
 
-		let r1 = coerce(float(52,12),F[src1]);
-		let r2 = coerce(float(52,12),F[src2]);
-		let valInexacte = coerce(float(52,12),F[src1]*F[src2]);
-		if r1 * r2 != valInexacte then
-			/* Inexact : flag NX = 1 */ 
+		let f1 : float(23,9) = F[src1]<31..0>;
+		let f2 : float(23,9) = F[src2]<31..0>;	
+		let r1 = coerce(float(52,12),f1);
+		let r2 = coerce(float(52,12),f2);
+		let valInexacte = coerce(float(52,12),f1/f2);
+		if r1 / r2 != valInexacte then 
+			/* Inexact : flag NX = 1 */
 			CSRS[1] = 1;
 		endif;
-		setF(dest,coerce(float(23,9),F[src1]) / coerce(float(23,9),F[src2]));
+		F[dest]<31..0> = f1 / f2;
 	}
 
 // FSQRT.S //TODO switch
@@ -293,19 +297,21 @@ op fsqrt_s(src: freg_t, rm: card(3), dest: freg_t)
 		//	domainError = 1;
 		//endif;
 
-		let srcd = coerce(float(52,12),F[src]);
+		let f1 : float(23,9) = F[src]<31..0>;
+		let srcd = coerce(float(52,12),f1);
 		let result = fsqrt32(srcd);
 		let resultR = coerce(float(23,9),result);
 		if result != coerce(float(52,12),resultR) then
 			/* Inexact : flag NX = 1 */ 
 			CSRS[1] = 1;
 		endif;
-		setF(dest,coerce(float(23,9),result));
-		if F[src] < 0 then 
+		F[dest]<31..0> = resultR;
+		if f1 < 0 then 
 			/* Invalid operation : flag NV = 1 and return nan */			
 			CSRS[1] = 16;
-			setF(dest,0x7FC00000);
+			F[dest]<31..0> = 0x7FC00000;
 		endif;
+		"printf"("\tval du registre dest: %08X\n",F[dest]<31..0>);
 
 
 
@@ -318,10 +324,12 @@ op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
 	action = {	
 		let NaN = 0;
 
+		"printf"("\tminimum entre %08X et %08X\n",F[src1]<31..0>,F[src2]<31..0>);
+
 		//If both inputs are NaNs, the result is the canonical NaN
 		if((F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0) && (F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0)) then			
 			NaN = 1;			
-			setF(dest,0x7fc00000);
+			F[dest]<31..0> = 0x7fc00000;
 			// Signaling NaN inputs set the invalid operation exception flag
 			if (F[src1]<31..0>==0x7f800001 || F[src1]<31..0>==0xff800001) || (F[src2]<31..0>==0x7f800001 || F[src2]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
@@ -332,7 +340,7 @@ op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		//If only one operand is a NaN, the result is the non-NaN operand.
 		if(!NaN && (F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0) && !(F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0)) then
 			NaN = 1;
-			setF(dest,F[src2]);
+			F[dest]<31..0> = F[src2]<31..0>;
 			if (F[src1]<31..0>==0x7f800001 || F[src1]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
 				CSRS[1] = 16;
@@ -340,7 +348,7 @@ op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		endif;
 		if(!NaN && (F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0) && !(F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0)) then
 			NaN = 1;
-			setF(dest,F[src1]);
+			F[dest]<31..0> = F[src1]<31..0>;
 			if (F[src2]<31..0>==0x7f800001 || F[src2]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
 				CSRS[1] = 16;
@@ -348,18 +356,20 @@ op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		endif;
 
 		if !NaN then
-			let condition = F[src1] < F[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			let f1 : float(23,9) = F[src1]<31..0>;
+			let f2 : float(23,9) = F[src2]<31..0>;
+			let condition = f1 < f2;
 			if condition then
-				setF(dest,F[src1]);
-			else 
-				setF(dest,F[src2]);
+				F[dest]<31..0> = f1;
+			else
+				F[dest]<31..0> = f2;
 			endif;
 			//the value −0.0 is considered to be less than the value +0.0.
-			if F[src1]==0 && F[src2]==0 then
-				if F[src1]<31..31> == 1 && F[src2]<31..31> == 0 then
-					setF(dest,F[src1]);
-				else
-					setF(dest,F[src2]);	
+			if F[src1]<31..0> == 0x80000000 && F[src2]<31..0> == 0x00000000 then
+				F[dest]<31..0> = F[src1]<31..0>;
+			else
+				if F[src1]<31..31> == 0x00000000 && F[src2]<31..31> == 0x80000000 then
+					F[dest]<31..0> = F[src2]<31..0>;
 				endif;
 			endif;
 		endif;
@@ -376,7 +386,7 @@ op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		//If both inputs are NaNs, the result is the canonical NaN
 		if((F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0) && (F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0)) then	
 			NaN = 1;			
-			setF(dest,0x7fc00000);
+			F[dest]<31..0> = 0x7fc00000;
 			// Signaling NaN inputs set the invalid operation exception flag
 			if (F[src1]<31..0>==0x7f800001 || F[src1]<31..0>==0xff800001) || (F[src2]<31..0>==0x7f800001 || F[src2]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
@@ -387,7 +397,7 @@ op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		//If only one operand is a NaN, the result is the non-NaN operand.
 		if(!NaN && (F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0) && !(F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0)) then
 			NaN = 1;
-			setF(dest,F[src2]);
+			F[dest]<31..0> = F[src2]<31..0>;
 			if (F[src1]<31..0>==0x7f800001 || F[src1]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
 				CSRS[1] = 16;
@@ -395,7 +405,7 @@ op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		endif;
 		if(!NaN && (F[src2]<30..23>==0b11111111 && F[src2]<22..0>!=0) && !(F[src1]<30..23>==0b11111111 && F[src1]<22..0>!=0)) then
 			NaN = 1;
-			setF(dest,F[src1]);
+			F[dest]<31..0> = F[src1]<31..0>;
 			if (F[src2]<31..0>==0x7f800001 || F[src2]<31..0>==0xff800001) then 
 				/* Invalid Operation: flag NV = 1 */
 				CSRS[1] = 16;
@@ -403,18 +413,20 @@ op fmax_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		endif;
 
 		if !NaN then
-			let condition = F[src1] > F[src2];
+			let f1 : float(23,9) = F[src1]<31..0>;
+			let f2 : float(23,9) = F[src2]<31..0>;
+			let condition = f1 > f2;
 			if condition then
-				setF(dest,F[src1]);
+				F[dest]<31..0> = f1;
 			else
-				setF(dest,F[src2]);
+				F[dest]<31..0> = f2;
 			endif;
 			//the value −0.0 is considered to be less than the value +0.0.
-			if F[src1]==0 && F[src2]==0 then
-				if F[src1]<31..31> == 1 && F[src2]<31..31> == 0 then
-					setF(dest,F[src2]);
-				else
-					setF(dest,F[src1]);	
+			if F[src1]<31..0> == 0x80000000 && F[src2]<31..0> == 0x00000000 then
+				F[dest]<31..0> = F[src2]<31..0>;
+			else
+				if F[src1]<31..0> == 0x00000000 && F[src2]<31..0> == 0x80000000 then
+					F[dest]<31..0> = F[src1]<31..0>;
 				endif;
 			endif;
 		endif;
@@ -429,7 +441,7 @@ op fsgnj_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnj.s %s, %s, %s", dest, src1, src2) endif 
 	image = format("0010000 %s %s 000 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,F[src2]<31..31>::F[src1]<30..0>);
+		F[dest]<31..0> = F[src2]<31..31>::F[src1]<30..0>;
 	}
 
 //   FSGNJN.S	
@@ -439,7 +451,7 @@ op fsgnjn_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnjn.s %s, %s, %s", dest, src1, src2) endif  
 	image = format("0010000 %s %s 001 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,(~F[src2]<31..31>)::F[src1]<30..0>);
+		F[dest]<31..0> = (~F[src2]<31..31>)::F[src1]<30..0>;
 	}
 
 //   FSGNJX.S
@@ -449,7 +461,7 @@ op fsgnjx_s(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnjx.s %s, %s, %s", dest, src1, src2) endif
 	image = format("0010000 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	
-		setF(dest,(F[src2]<31..31> ^ F[src1]<31..31>)::F[src1]<30..0>);
+		F[dest]<31..0> = (F[src2]<31..31> ^ F[src1]<31..31>)::F[src1]<30..0>;
 	}
 
 //   FCVT.W.S //TODO switch
@@ -457,14 +469,15 @@ op fcvt_w_s(src: freg_t, rm: card(3), dest: reg_t)
 	syntax = format("fcvt.w.s %s, %s", dest, src) 
 	image = format("1100000 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		if F[src] != coerce(real,coerce(word,F[src])) then 
+		let f : float(23,9) = F[src]<31..0>;
+		if f != coerce(real,coerce(word,f)) then 
 			/* Inexact : flag NX = 1 */ 
 			CSRS[1] = 1;
 		endif;
-		setR(dest,coerce(word,F[src]));
+		setR(dest,coerce(word,f));
 
 		//output for out-of-range negative input		
-		if(F[src] < coerce(real,(-2**31)) ) then
+		if(f < coerce(real,(-2**31)) ) then
 			setR(dest,0x80000000);
 			CSRS[1]=16;
 		endif;
@@ -476,7 +489,7 @@ op fcvt_w_s(src: freg_t, rm: card(3), dest: reg_t)
 		endif;
 
 		//output for out-of-range positive input
-		if(F[src] > coerce(real,(2**31 - 1)) ) then
+		if(f > coerce(real,(2**31 - 1)) ) then
 			setR(dest,0x7fffffff);
 			CSRS[1]=16;
 		endif;
@@ -493,14 +506,15 @@ op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
 	syntax = format("fcvt.wu.s %s, %s", dest, src) 
 	image = format("1100000 00001 %s %3b %s 1010011", src, rm, dest)
 	action = {
-		if F[src] != coerce(real,coerce(int(64),F[src])) then 
+		let f : float(23,9) = F[src]<31..0>;
+		if f != coerce(real,coerce(int(64),f)) then 
 			/* Inexact : flag NX = 1 */ 
 			CSRS[1] = 1;
 		endif;
-		setR(dest,coerce(uword,F[src]));
+		setR(dest,coerce(uword,f));
 		
 		//output for out-of-range negative input
-		if(coerce(int(64),F[src])<63..63>==1) then
+		if(coerce(int(64),f)<63..63>==1) then
 			"printf"("entree dans la premiere boucle\n");
 			setR(dest,0x00000000);
 			CSRS[1]=16;
@@ -513,7 +527,7 @@ op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
 		endif;	
 
 		//output for out-of-range positive input
-		if(coerce(int(64),F[src]) > coerce(int(64),0xffffffff) ) then
+		if(coerce(int(64),f) > coerce(int(64),0xffffffff) ) then
 			"printf"("entree dans la deuxieme boucle\n");
 			setR(dest,0xffffffff);
 			CSRS[1]=16;
@@ -534,7 +548,7 @@ op fcvt_s_w(src: reg_t, rm: card(3), dest: freg_t)
 	syntax =  format("fcvt.s.w %s, %s", dest, src) 
 	image = format("1101000 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		setF(dest,coerce(float(23,9),R[src]));
+		F[dest]<31..0> = coerce(float(23,9),R[src]);
 	}
 	
 //   FCVT.S.WU
@@ -542,7 +556,7 @@ op fcvt_s_wu(src: reg_t, rm: card(3), dest: freg_t)
 	syntax =  format("fcvt.s.wu %s, %s", dest, src) 
 	image = format("1101000 00001 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		setF(dest,coerce(float(23,9),coerce(uword,R[src])));
+		F[dest]<31..0> = coerce(float(23,9),coerce(uword,R[src]));
 	}
 
 //   FMV.W.X
@@ -558,7 +572,7 @@ op fmv_x_w(src: freg_t, dest: reg_t)
 	syntax = format("fmv.x.w %s, %s", dest, src)
 	image = format("1110000 00000 %s 000 %s 1010011", src, dest)
 	action = {
-		setR(dest,F[src]);
+		setR(dest,F[src]<31..0>);
 	}
 
 
@@ -576,7 +590,9 @@ op fle_s(src2: freg_t, src1: freg_t, dest: reg_t)
 			/* Invalid Operation : flag NV = 1 */ 
 			CSRS[1] = 16;
 		else
-			let condition = F[src1] <= F[src2];
+			let f1 : float(23,9) = F[src1]<31..0>;
+			let f2 : float(23,9) = F[src2]<31..0>;
+			let condition = f1 <= f2;
 			if condition then
 				setR(dest,1);
 			else 
@@ -597,7 +613,9 @@ op flt_s(src2: freg_t, src1: freg_t, dest: reg_t)
 			/* Invalid Operation : flag NV = 1 */ 
 			CSRS[1] = 16;
 		else
-			let condition = F[src1] < F[src2];
+			let f1 : float(23,9) = F[src1]<31..0>;
+			let f2 : float(23,9) = F[src2]<31..0>;
+			let condition = f1 < f2;
 			if condition then
 				setR(dest,1);
 			else 
@@ -618,7 +636,9 @@ op feq_s(src2: freg_t, src1: freg_t, dest: reg_t)
 			/* Invalid Operation : flag NV = 1 */ 
 			CSRS[1] = 16;
 		else 
-			let condition = F[src1] == F[src2];
+			let f1 : float(23,9) = F[src1]<31..0>;
+			let f2 : float(23,9) = F[src2]<31..0>;
+			let condition = f1 == f2;
 			if condition then
 				setR(dest,1);
 			else 
