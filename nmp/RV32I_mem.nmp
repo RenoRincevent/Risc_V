@@ -110,8 +110,8 @@ op lw(offset: int(12), base: reg_t, dest: reg_t)
 		else
 			vAddr = vAddr + offset;
 		endif;
-		"printf"("recuperation du mot memoire a l addresse %08X\n",vAddr);
-		"printf"("valeur du mot memoire: %d\n",M32[vAddr]);
+		"printf"("\trecuperation du mot memoire a l addresse %08X\n",vAddr);
+		"printf"("\tvaleur du mot memoire: %08X\n",M32[vAddr]);
 		setR(dest, coerce(word,M32[vAddr]));
 	}
 	

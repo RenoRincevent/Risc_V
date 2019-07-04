@@ -35,6 +35,15 @@ canon float(52,12) "fsqrt32"(src: float(52,12))
 canon float(52,12) "roundingDouble"(result: float(52,12), rm: int(32))
 canon float(52,12) "fsqrt64"(src: float(52,12))
 
+canon word "fp_testexcept"(word)
+canon "fp_clearexcept"(word)
+canon "fp_raiseexcept"(word)
+canon word "FP_INEXACT"
+canon word "FP_DIVBYZERO"
+canon word "FP_UNDERFLOW"
+canon word "FP_OVERFLOW"
+canon word "FP_INVALID"
+canon word "FP_ALLEXCEPT"
 
 // macros
 macro _32_bit_arithmetic_overflow(d, t, s) = \
@@ -87,7 +96,7 @@ macro StoreMemoryWORD(CCA, MemElem, pAddr, vAddr) = M32[pAddr] = MemElem
 // macro StoreMemoryDOUBLEWORD(CCA, MemElem, pAddr, vAddr) = M64[pAddr] = MemElem
 
 macro StoreMemoryWORDF(CCA, MemElem, pAddr, vAddr) = M32F[pAddr] = MemElem
-macro StoreMemoryWORDD(CCA, MemElem, pAddr, vAddr) = M32D[pAddr] = MemElem
+//macro StoreMemoryWORDD(CCA, MemElem, pAddr, vAddr) = M32D[pAddr] = MemElem
 
 
 //macro for AMOs instructions

@@ -51,7 +51,7 @@ op csrrw(srcdest: CSRs, source: reg_t, dest: reg_t)
 		let t = CSRS[srcdest];
 		CSRS[srcdest] = R[source];
 		setR(dest,t);
-		"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
+		//"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
 		//SignalException(Trap);
 	}
 
@@ -66,7 +66,7 @@ op csrrs(srcdest: CSRs, source: reg_t, dest: reg_t)
 		let t = CSRS[srcdest];
 		CSRS[srcdest] = t<31..0> | R[source]<31..0>;
 		setR(dest,t);
-		"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
+		//"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
 		//SignalException(Trap);
 	}
 

@@ -202,6 +202,19 @@ op fadd_s(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 			CSRS[1] = 1;
 		endif;
 		F[dest]<31..0> = f1 + f2;
+
+		"printf"("\tvaleur du float1 %.20f || %.20f\n",f1,r1);
+		"printf"("\tvaleur du float2 %.20f || %f\n",f2,f2);
+		"printf"("\tvaleur du float resultat %.20f\n",r1+r2);
+		"printf"("\tValeur inexacte %f\n",f1+f2);
+		let num : float(23,9) = 23.345;
+  		let intpart : int(32) = coerce(int(32),num);
+  		let decpart : float(23,9) = num - intpart;
+  		"printf"("Num = %f, intpart = %d, decpart = %f\n", num, intpart, decpart);
+		if f1 + 0 != f1 then 
+			"printf"("\tValeur inexacte %5.20f\n",f1 + 0);
+		endif; 
+		"printf"("\tvaleur du resultat: %08X\n",F[dest]<31..0>);
 		//"printf"("\t%f(%08X) + %f(%08X) = ",f1,f1<31..0>,f2,f2<31..0>);
 		//"printf"("%f(%08X)\n",f1+f2,(f1+f2)<31..0>);
 	}
@@ -368,7 +381,7 @@ op fmin_s(src2: freg_t, src1: freg_t, dest: freg_t)
 			if F[src1]<31..0> == 0x80000000 && F[src2]<31..0> == 0x00000000 then
 				F[dest]<31..0> = F[src1]<31..0>;
 			else
-				if F[src1]<31..31> == 0x00000000 && F[src2]<31..31> == 0x80000000 then
+				if F[src1]<31..0> == 0x00000000 && F[src2]<31..0> == 0x80000000 then
 					F[dest]<31..0> = F[src2]<31..0>;
 				endif;
 			endif;
@@ -527,7 +540,7 @@ op fcvt_wu_s(src: freg_t, rm: card(3), dest: reg_t)
 		endif;	
 
 		//output for out-of-range positive input
-		if(coerce(int(64),f) > coerce(int(64),0xffffffff) ) then
+		if(coerce(card(64),f) > coerce(card(64),0xffffffff) ) then
 			"printf"("entree dans la deuxieme boucle\n");
 			setR(dest,0xffffffff);
 			CSRS[1]=16;

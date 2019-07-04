@@ -85,58 +85,52 @@ op fadd_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fadd.d %s, %s, %s", dest, src1, src2)
 	image = format("0000001 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {	
-		setD(dest,coerce(float(52,12),D[src1])+coerce(float(52,12),D[src2]));
-		"printf"("\t%lf + %lf = %lf\n",coerce(float(52,12),D[src1]),coerce(float(52,12),D[src2]),coerce(float(52,12),D[src1])+coerce(float(52,12),D[src2]));
-		"printf"("\tvaleur du registre dest: %lf\n",D[dest]);
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] + F[src2];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
+		endif;
 	}
 
 op fsub_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fsub.d %s, %s, %s", dest, src1, src2)
 	image = format("0000101 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		let roundingMod = rm;
-
-		let result = r1-r2;
-		//if roundingMod == 7 then
-		//	roundingMod = FCSR<7..5>;
-		//endif;
-		let resultRound = roundingDouble(result,roundingMod); 
-		setD(dest,resultRound);
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] - F[src2];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
+		endif;
+		if("fp_testexcept"("FP_INVALID")) then
+			CSRS[1] = 16;
+			F[dest]<63..0> = 0x7ff8000000000000;
+		endif;
 	}
 
 op fmul_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmul.d %s, %s, %s", dest, src1, src2)
 	image = format("0001001 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		let roundingMod = rm;
-
-		let result = r1*r2;
-		//if roundingMod == 7 then
-		//	roundingMod = FCSR<7..5>;
-		//endif;
-		let resultRound = roundingDouble(result,roundingMod); 
-		setD(dest,resultRound);
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] * F[src2];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
+		endif;
 	}
 
 op fdiv_d(src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fdiv.d %s, %s, %s", dest, src1, src2)
 	image = format("0001101 %s %s %3b %s 1010011", src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		//if r2 == 0 then FCSR<3..3> = 1; endif;
-		let roundingMod = rm;
-
-		let result = r1/r2;
-		//if roundingMod == 7 then
-		//	roundingMod = FCSR<7..5>;
-		//endif;
-		let resultRound = roundingDouble(result,roundingMod); 
-		setD(dest,resultRound);
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] / F[src2];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
+		endif;
+		if("fp_testexcept"("FP_DIVBYZERO")) then
+			CSRS[1] = 8;
+			//return nan or infinite ?
+		endif;
 	}
 	
 
@@ -144,33 +138,48 @@ op fmin_d(src2: freg_t, src1: freg_t, dest: freg_t)
 	syntax = format("fmin.d %s, %s, %s", dest, src1, src2)  
 	image = format("0010101 %s %s 000 %s 1010011", src2, src1, dest)
 	action = {	
-		let NaN = 1;
-		let sNan = coerce(float(52,12),0b0111111111110000000000000000000000000000000000000000000000000001);
-		let qNan = coerce(float(52,12),0b0111111111111000000000000000000000000000000000000000000000000001);
-		let nanCanonical = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
+		let NaN = 0;
 
-		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
-		if((D[src1]<62..0> == sNan<62..0> || D[src2]<62..0> == sNan<62..0>) || (D[src1]<62..0> == qNan<62..0> && D[src2]<62..0> == qNan<62..0>)) then
-			NaN = 0;			
-			setD(dest,nanCanonical);
+		//If both inputs are NaNs, the result is the canonical NaN
+		if (F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0) && (F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0) then 
+			NaN = 1;
+			F[dest]<63..0> = 0x7ff8000000000000;
+			// Signaling NaN inputs set the invalid operation exception flag
+			if F[src1]<62..0>==0x7ff0000000000001 || F[src2]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
 
-		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
-		if(!NaN && D[src1]<62..0> == qNan<62..0> && !(D[src2]<62..0> == qNan<62..0> || D[src2]<62..0> == sNan<62..0>)) then
-			NaN = 0;
-			setD(dest,D[src2]);
+		//If only one operand is a NaN, the result is the non-NaN operand.
+		if(!NaN && (F[src1]<62..52>==0x7ff && F[src1]<2..0>!=0) && !(F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0)) then
+			NaN = 1;
+			F[dest]<63..0> = F[src2]<63..0>;
+			if F[src1]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
-		if(!NaN && D[src2]<62..0> == qNan<62..0> && !(D[src1]<62..0> == qNan<62..0> || F[src1]<62..0> == sNan<62..0>)) then
-			NaN = 0;
-			setD(dest,D[src1]);
+		if(!NaN && (F[src2]<62..52>==0x7ff && F[src2]<2..0>!=0) && !(F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0)) then
+			NaN = 1;
+			F[dest]<63..0> = F[src1]<63..0>;
+			if F[src2]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
 
 		if !NaN then
-			let condition = D[src1] < D[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			let condition = F[src1] < F[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
 			if condition then
-				setD(dest,D[src1]);
+				setF(dest,F[src1]);
 			else 
-				setD(dest,D[src2]);
+				setF(dest,F[src2]);
+			endif;
+			//the value −0.0 is considered to be less than the value +0.0.
+			if F[src1]<63..0> == 0x8000000000000000 && F[src2]<63..0> == 0x0000000000000000 then
+				F[dest]<63..0> = F[src1]<63..0>;
+			else
+				if F[src1]<63..0> == 0x0000000000000000 && F[src2]<63..0> == 0x8000000000000000 then
+					F[dest]<63..0> = F[src2]<63..0>;
+				endif;
 			endif;
 		endif;
 
@@ -180,33 +189,48 @@ op fmax_d(src2: freg_t, src1: freg_t, dest: freg_t)
 	syntax = format("fmax.d %s, %s, %s", dest, src1, src2)
 	image = format("0010101 %s %s 001 %s 1010011", src2, src1, dest)
 	action = {	
-		let NaN = 1;
-		let sNan = coerce(float(52,12),0b0111111111110000000000000000000000000000000000000000000000000001);
-		let qNan = coerce(float(52,12),0b0111111111111000000000000000000000000000000000000000000000000001);
-		let nanCanonical = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
+		let NaN = 0;
 
-		//if at least one input is a signaling NaN, or if both inputs are quiet NaNs, the result is the canonical NaN
-		if((D[src1]<62..0> == sNan<62..0> || D[src2]<62..0> == sNan<62..0>) || (D[src1]<62..0> == qNan<62..0> && D[src2]<62..0> == qNan<62..0>)) then
-			NaN = 0;			
-			setD(dest,nanCanonical);
+		//If both inputs are NaNs, the result is the canonical NaN
+		if (F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0) && (F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0) then 
+			NaN = 1;
+			F[dest]<63..0> = 0x7ff8000000000000;
+			// Signaling NaN inputs set the invalid operation exception flag
+			if F[src1]<62..0>==0x7ff0000000000001 || F[src2]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
 
-		//If one operand is a quiet NaN and the other is not a NaN, the result is the non-NaN operand.
-		if(!NaN && D[src1]<62..0> == qNan<62..0> && !(D[src2]<62..0> == qNan<62..0> || D[src2]<62..0> == sNan<62..0>)) then
-			NaN = 0;
-			setD(dest,D[src2]);
+		//If only one operand is a NaN, the result is the non-NaN operand.
+		if(!NaN && (F[src1]<62..52>==0x7ff && F[src1]<2..0>!=0) && !(F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0)) then
+			NaN = 1;
+			F[dest]<63..0> = F[src2]<63..0>;
+			if F[src1]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
-		if(!NaN && D[src2]<62..0> == qNan<62..0> && !(D[src1]<62..0> == qNan<62..0> || F[src1]<62..0> == sNan<62..0>)) then
-			NaN = 0;
-			setD(dest,D[src1]);
+		if(!NaN && (F[src2]<62..52>==0x7ff && F[src2]<2..0>!=0) && !(F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0)) then
+			NaN = 1;
+			F[dest]<63..0> = F[src1]<63..0>;
+			if F[src2]<62..0>==0x7ff0000000000001 then
+				CSRS[1] = 16;
+			endif;
 		endif;
 
 		if !NaN then
-			let condition = D[src1] > D[src2]; //TODO comment cela ce passe si les deux sont égaux ? une valeur a prendre en priorité ?
+			let condition = F[src1] > F[src2];
 			if condition then
-				setD(dest,D[src1]);
+				setF(dest,F[src1]);
 			else 
-				setD(dest,D[src2]);
+				setF(dest,F[src2]);
+			endif;
+			//the value −0.0 is considered to be less than the value +0.0.
+			if F[src1]<63..0> == 0x8000000000000000 && F[src2]<63..0> == 0x0000000000000000 then
+				F[dest]<63..0> = F[src2]<63..0>;
+			else
+				if F[src1]<63..0> == 0x0000000000000000 && F[src2]<63..0> == 0x8000000000000000 then
+					F[dest]<63..0> = F[src1]<63..0>;
+				endif;
 			endif;
 		endif;
 	}
@@ -218,29 +242,29 @@ op fsqrt_d(src: freg_t, rm: card(3), dest: freg_t)
 		let domainError = 1;
 		let Nan = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
 
-		//If D[src] is NaN, a NaN shall be returned.
-		if(D[src]<62..52>==Nan<62..52> && D[src]<51..0>!=0) then
-			setD(dest,D[src]);
+		//If F[src] is NaN, a NaN shall be returned.
+		if(F[src]<62..52>==Nan<62..52> && F[src]<51..0>!=0) then
+			setF(dest,F[src]);
 			domainError = 0;
 		endif;
 
-		//If D[src] is ±0 or +Inf, D[src] shall be returned.
-		if(D[src]<62..0> == 0 || (D[src]<63..63> == 0 && D[src]<62..52> == 0b11111111111 && D[src]<51..0> == 0)) then
-			setD(dest,D[src]);
+		//If F[src] is ±0 or +Inf, F[src] shall be returned.
+		if(F[src]<62..0> == 0 || (F[src]<63..63> == 0 && F[src]<62..52> == 0b11111111111 && F[src]<51..0> == 0)) then
+			setF(dest,F[src]);
 			domainError = 0;
 		endif;
 
-		//If D[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
-		if(D[src]<63..63> == 1) then
+		//If F[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
+		if(F[src]<63..63> == 1) then
 			SignalException(InvalidOperation);
 		//	FCSR<4..4> = 1;
-			setD(dest,Nan);
+			setF(dest,Nan);
 			domainError = 0;
 		endif;
 
-		//If D[src] -> PosNormal, compute sqrt
+		//If F[src] -> PosNormal, compute sqrt
 		if(!domainError) then	
-			let result = fsqrt64(D[src]);
+			let result = fsqrt64(F[src]);
 			let roundingMod = rm;
 		//	if roundingMod == 7 then
 		//		roundingMod = FCSR<7..5>;
@@ -255,9 +279,9 @@ op fmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1]; //reg F[32, float(23,9)]
-		let r2 = D[src2];
-		let r3 = D[src3];
+		let r1 = F[src1]; //reg F[32, float(23,9)]
+		let r2 = F[src2];
+		let r3 = F[src3];
 		let roundingMod = rm;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
@@ -270,7 +294,7 @@ op fmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		//		roundingMod = FCSR<7..5>;
 		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
-			setD(dest,resultRound); 
+			setF(dest,resultRound); 
 		endif;
 	}
 
@@ -278,9 +302,9 @@ op fmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		let r3 = D[src3];
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
 		let roundingMod = rm;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
@@ -293,7 +317,7 @@ op fmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		//		roundingMod = FCSR<7..5>;
 		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
-			setD(dest,resultRound); 
+			setF(dest,resultRound); 
 		endif;
 	}
 
@@ -301,9 +325,9 @@ op fnmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fnmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		let r3 = D[src3];
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
 		let roundingMod = rm;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
@@ -316,7 +340,7 @@ op fnmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		//		roundingMod = FCSR<7..5>;
 		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
-			setD(dest,resultRound); 
+			setF(dest,resultRound); 
 		endif;
 	}
 
@@ -324,9 +348,9 @@ op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fnmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = D[src1];
-		let r2 = D[src2];
-		let r3 = D[src3];
+		let r1 = F[src1];
+		let r2 = F[src2];
+		let r3 = F[src3];
 		let roundingMod = rm;
 
 		//raise the invalid operation exception when the multiplicands are infinite and zero
@@ -339,7 +363,7 @@ op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 		//		roundingMod = FCSR<7..5>;
 		//	endif;
 			let resultRound = roundingDouble(result,roundingMod); 
-			setD(dest,resultRound); 
+			setF(dest,resultRound); 
 		endif;
 	}
 
@@ -352,12 +376,8 @@ op fsgnj_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 		format("fmv.s %s, %s", dest, src1)
 		else format("fsgnj.d %s, %s, %s", dest, src1, src2) endif 
 	image = format("0010001 %s %s 000 %s 1010011", src2, src1,  dest)
-	action = {
-		if D[src1]==D[src2] then
-			setD(dest,D[src1]);
-		else			
-			setD(dest,coerce(float(52,12),D[src2]<63..63>::D[src1]<62..0>));
-		endif;
+	action = {			
+		F[dest]<63..0> = F[src2]<63..63>::F[src1]<62..0>;
 	}
 	
 	
@@ -367,11 +387,7 @@ op fsgnjn_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 		else format("fsgnjn.d %s, %s, %s", dest, src1, src2) endif
 	image = format("0010001 %s %s 001 %s 1010011", src2, src1,  dest)
 	action = {	
-		if D[src1]==D[src2] then
-			setD(dest,-D[src1]);
-		else			
-			setD(dest,coerce(float(52,12),(-D[src2]<63..63>)::D[src1]<62..0>));
-		endif;
+		F[dest]<63..0> = (~F[src2]<63..63>)::F[src1]<62..0>;
 	}
 		
 op fsgnjx_d(src2: freg_t, src1: freg_t, dest: freg_t)
@@ -380,70 +396,118 @@ op fsgnjx_d(src2: freg_t, src1: freg_t, dest: freg_t)
 		else format("fsgnjx.d %s, %s, %s", dest, src1, src2) endif
 	image = format("0010001 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	
-		if D[src1]==D[src2] then
-			D[src1]<63..63>=0;
-			setD(dest,D[src1]);
-		else			
-			setD(dest,coerce(float(52,12),(D[src2]<63..63> ^ D[src1]<63..63>)::D[src1]<62..0>));
-		endif;
+		F[dest]<63..0> = (F[src2]<63..63> ^ F[src1]<63..63>)::F[src1]<62..0>;
 	}
 
 op fcvt_s_d(src: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fcvt.s.d %s, %s", dest, src) 
 	image = format("0100000 00001 %s %3b %s 1010011", src, rm, dest)
-	action = {	
-		let resultRound = rounding(coerce(float(23,9),D[src]),rm);
-		setF(dest,resultRound);
+	action = {
+		if F[src]<62..52>==0x7ff && F[src]<51..0>!=0 then 
+			F[dest]<31..0> = 0x7fc00000;
+		else 
+			let sr : float(52,12) = F[src];
+			F[dest]<31..0> = coerce(float(23,9),sr);
+		endif;
 	}
 	
 op fcvt_d_s( src: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fcvt.d.s %s, %s", dest, src)
 	image = format("0100001 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {
-		//FCVT.D.S will never round	
-		setD(dest,coerce(float(52,12),F[src]));
+		//FCVT.D.S will never round
+		if F[src]<30..23>==0b11111111 && F[src]<22..0>!=0 then 
+			F[dest]<63..0> = 0x7ff8000000000000;
+		else
+			let sr : float(23,9) = F[src]<31..0>;	
+			F[dest]<63..0> = coerce(float(52,12),sr);	
+		endif;
 	}
 
 op fcvt_w_d(src: freg_t, rm: card(3), dest: reg_t)
 	syntax =  format("fcvt.w.d %s, %s", dest, src) 
 	image = format("1100001 00000 %s %3b %s 1010011", src, rm, dest)
-	action = {	
-		setR(dest,coerce(word,D[src]));
+	action = {
+		let f : float(52,12) = F[src]<63..0>;
+		if f != coerce(float(52,12),coerce(word,f)) then 
+			/* Inexact : flag NX = 1 */ 
+			CSRS[1] = 1;
+		endif;	
+		setR(dest,coerce(word,F[src]));
+
+		//output for out-of-range negative input		
+		if(f < coerce(float(52,12),(-2**31)) ) then
+			setR(dest,0x80000000);
+			CSRS[1]=16;
+		endif;
+
+		//output for -infinite
+		if(F[src]<63..0>==0xfff0000000000000) then	
+			setR(dest,0x80000000);
+			CSRS[1]=16;
+		endif;
+
+		//output for out-of-range positive input
+		if(f > coerce(float(52,12),(2**31 - 1)) ) then
+			setR(dest,0x7fffffff);
+			CSRS[1]=16;
+		endif;
+
+		//output for +infinite or NaN
+		if(F[src]<63..0> == 0x7ff0000000000000 || (F[src]<62..52>==0x7ff && F[src]<51..0>!=0)) then	
+			setR(dest,0x7fffffff);
+			CSRS[1]=16;
+		endif;
 	}
 
 op fcvt_wu_d(src: freg_t, rm: card(3), dest: reg_t)
 	syntax = format("fcvt.wu.d %s, %s", dest, src)
 	image = format("1100001 00001 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		setR(dest,coerce(uword,D[src]));
+		let f : float(52,12) = F[src]<63..0>;
+		if f != coerce(float(52,12),coerce(int(64),f)) then
+			/* Inexact : flag NX = 1 */ 
+			CSRS[1] = 1;
+		endif;
+		setR(dest,coerce(uword,F[src]));
+
 		//output for out-of-range negative input
-		if(D[src]<63..63>==1) then
-			setR(dest,coerce(uword,0));
+		if(coerce(int(64),f)<63..63>==1) then
+			setR(dest,0x00000000);
+			CSRS[1]=16;
 		endif;		
 
+		//output for -infinite
+		if(F[src]<63..0>==0xfff0000000000000) then
+			setR(dest,0x00000000);
+			CSRS[1]=16;
+		endif;	
+
 		//output for out-of-range positive input
-		if(D[src] > (2*32 - 1)) then
-			setR(dest,coerce(uword,2**32 - 1));
+		if(coerce(int(64),f) > coerce(int(64),0xffffffff)) then
+			setR(dest,0xffffffff);
+			CSRS[1]=16;
 		endif;
 
 		//output for +infinite or NaN
-		if(D[src]<63..52>==0b111111111111 || (D[src]<62..52>==0b11111111111 && D[src]<51..0>!=0)) then
-			setR(dest,coerce(uword,2**32 - 1));
-		endif; 
+		if(F[src]<63..0> == 0x7ff0000000000000 || (F[src]<62..52>==0x7ff && F[src]<51..0>!=0)) then
+			setR(dest,0xffffffff);
+			CSRS[1]=16;
+		endif;
 	}
 
 op fcvt_d_w(src: reg_t, rm: card(3), dest: freg_t)
 	syntax =  format("fcvt.d.w %s, %s", dest, src) 
 	image = format("1101001 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		setD(dest,coerce(float(52,12),R[src]));
+		F[dest]<63..0> = coerce(float(52,12),R[src]);
 	}
 	
 op fcvt_d_wu(src: reg_t, rm: card(3), dest: freg_t)
 	syntax = format("fcvt.d.wu %s, %s", dest, src)
 	image  = format("1101001 00001 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		setD(dest,coerce(float(52,12),R[src]));
+		F[dest]<63..0> = coerce(float(52,12),coerce(uword,R[src]));
 	}
 
 // 9.6 Double-Precision Floating-Point Compare Instructions
@@ -453,11 +517,12 @@ op fle_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	image = format("1010001 %s %s 000 %s 1010011", src2, src1, dest)
 	action = {	
 		//An invalid operation exception is raised if either input is NaN
-		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+		if((F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0) || (F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0)) then
 			setR(dest,0);
-			SignalException(InvalidOperation);
+			/* Invalid Operation : flag NV = 1 */ 
+			CSRS[1] = 16;
 		else
-			let condition = D[src1] <= D[src2];
+			let condition = F[src1] <= F[src2];
 			if condition then
 				setR(dest,1);
 			else 
@@ -471,11 +536,12 @@ op flt_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	image = format("1010001 %s %s 001 %s 1010011", src2, src1, dest)
 	action = {	
 		//An invalid operation exception is raised if either input is NaN
-		if((D[src1]<62..52>==0b11111111111 && D[src1]<51..0>!=0) || (D[src2]<62..52>==0b11111111111 && D[src2]<51..0>!=0)) then
+		if((F[src1]<62..52>==0x7ff && F[src1]<51..0>!=0) || (F[src2]<62..52>==0x7ff && F[src2]<51..0>!=0)) then
 			setR(dest,0);
-			SignalException(InvalidOperation);
+			/* Invalid Operation : flag NV = 1 */ 
+			CSRS[1] = 16;
 		else
-			let condition = D[src1] < D[src2];
+			let condition = F[src1] < F[src2];
 			if condition then
 				setR(dest,1);
 			else 
@@ -489,11 +555,12 @@ op feq_d(src2: freg_t, src1: freg_t, dest: reg_t)
 	image = format("1010001 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	
 		//Only signaling NaN inputs cause an invalid operation exception
-		if(D[src1]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001 || D[src2]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001) then
+		if(F[src1]<62..0> == 0x7ff0000000000001 || F[src2]<62..0> == 0x7ff0000000000001) then
 			setR(dest,0);
-			SignalException(InvalidOperation);
+			/* Invalid Operation : flag NV = 1 */ 
+			CSRS[1] = 16;
 		else
-			let condition = D[src1] == D[src2];
+			let condition = F[src1] == F[src2];
 			if condition then
 				setR(dest,1);
 			else
@@ -505,50 +572,50 @@ op feq_d(src2: freg_t, src1: freg_t, dest: reg_t)
 // 9.7 Double-Precision Floating-Point Classify Instruction 
 // --------------------------------------------------------
 //	bit sign	    exponent	          mantissa
-// (D[src]<63..63>   &&   D[src]<62..52>   &&   D[src]<51..0>)
+// (F[src]<63..63>   &&   F[src]<62..52>   &&   F[src]<51..0>)
 op fclass_d(src: freg_t, dest: reg_t)
 	syntax = format("fclass.d %s, %s", dest, src)
 	image = format("1110001 00000 %s 001 %s 1010011", src, dest)
 	action = {	
 		setR(dest,0);
 		//NegInfinity, bit 0
-		if(D[src]<63..52>==0b111111111111 && D[src]<51..0>==0) then
+		if(F[src]<63..0> == 0xfff0000000000000) then
 			setR(dest,1);
 		endif;
 		//NegNormal, bit 1
-		if(D[src]<63..63>==1 && D[src]<62..52>!=0 && D[src]<62..52> < 0b11111111111) then
+		if(F[src]<63..63>==1 && F[src]<62..52>!=0 && F[src]<62..52> < 0b11111111111) then
 			setR(dest,1<<1);
 		endif;
 		//NegSubnormal, bit 2
-		if(D[src]<63..52>==0b100000000000 && D[src]<51..0>!=0) then
+		if(F[src]<63..52>==0b100000000000 && F[src]<51..0>!=0) then
 			setR(dest,1<<2);
 		endif;
 		//NegZero, bit 3
-		if(D[src]<63..0>==0b1000000000000000000000000000000000000000000000000000000000000000) then
+		if(F[src]<63..0> == 0x8000000000000000) then
 			setR(dest,1<<3);
 		endif;
 		//PosZero, bit 4
-		if(D[src]<63..0>==0) then 
+		if(F[src]<63..0> == 0x0000000000000000) then 
 			setR(dest,1<<4);
 		endif;
 		//PosSubnormal, bit 5
-		if(D[src]<63..52>==0 && D[src]<51..0>!=0) then
+		if(F[src]<63..52>==0 && F[src]<51..0>!=0) then
 			setR(dest,1<<5);
 		endif;
 		//PosNormal, bit 6
-		if(D[src]<63..63>==0 && D[src]<62..52> > 0 && D[src]<62..52> < 0b11111111111) then
+		if(F[src]<63..63>==0 && F[src]<62..52> > 0 && F[src]<62..52> < 0b11111111111) then
 			setR(dest,1<<6);
 		endif;
 		//PosInfinity, bit 7
-		if(D[src]<63..52>==0b011111111111 && D[src]<51..0>==0) then
+		if(F[src]<63..0> == 0x7ff0000000000000) then
 			setR(dest,1<<7);
 		endif;
 		//SignalingNan, bit 8
-		if(D[src]<62..0>==0b111111111110000000000000000000000000000000000000000000000000001) then
+		if(F[src]<62..0> == 0x7ff0000000000001) then
 			setR(dest,1<<8);
 		endif;
 		//QuietNan, bit 9
-		if(D[src]<62..0>==0b111111111111000000000000000000000000000000000000000000000000001) then
+		if(F[src]<62..0> == 0x7ff8000000000000) then
 			setR(dest,1<<9);
 		endif;
 		

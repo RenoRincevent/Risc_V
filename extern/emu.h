@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 #include <math.h>
+#include <fenv.h>
+#pragma STDC FENV_ACCESS ON
 
 #if defined(__cplusplus)
 extern  "C" {
@@ -31,6 +33,19 @@ extern  "C" {
 #define GLISS_EMU_STATE
 #define GLISS_EMU_INIT(s)
 #define GLISS_EMU_DESTROY(s)
+
+/* Values */
+#define FP_INEXACT     FE_INEXACT
+#define FP_DIVBYZERO   FE_DIVBYZERO
+#define FP_UNDERFLOW   FE_UNDERFLOW
+#define FP_OVERFLOW    FE_OVERFLOW
+#define FP_INVALID     FE_INVALID
+#define FP_ALLEXCEPT   FE_ALL_EXCEPT
+
+/* Functions */
+#define fp_clearexcept(flag) feclearexcept(flag)  /* clear a set of exceptions */
+#define fp_raiseexcept(flag) feraiseexcept(flag)  /* 'set' a set of exceptions */
+#define fp_testexcept(flag)  fetestexcept(flag)   /* test a set of exceptions */
 
 #define BreakPoint		0
 #define	IntegerOverflow		1
@@ -48,11 +63,14 @@ void SyncOperation(int stype);
 
 void aquirement();
 void release();
+void notReserve();
 void reserve(int memoryWord);
 uint32_t reserved(int memoryWord);
+int lrAddr;
+int hasLr;
 
 float rounding(float result, int rm);
-float fsqrt32(float src);
+double fsqrt32(double src);
 
 double roundingDouble(double result, int rm);
 double fsqrt64(double src);

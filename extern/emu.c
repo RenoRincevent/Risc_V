@@ -20,6 +20,8 @@
  */
 
 #include <gliss/emu.h>
+#include <math.h>
+#include <fenv.h>
 
 /**
  * Function called for the "pref" instruction.
@@ -68,11 +70,23 @@ void aquirement(){
 void release(){
 }
 
+void notReserve(){
+	hasLr = 0;
+}
+
 void reserve(int memoryWord){
+		hasLr = 1;
+		lrAddr = memoryWord;
 }
 
 uint32_t reserved(int memoryWord){
-	return 0;
+	if(hasLr == 1 && memoryWord == lrAddr){
+		hasLr = 0;
+		return 1;
+	}
+	else{
+		return 0;
+	}
 }
 
 /**
@@ -81,9 +95,18 @@ uint32_t reserved(int memoryWord){
 float rounding(float result, int rm){
 	return result;
 }
-float fsqrt32(float src){
-	//return sqrt(src); ERROR
-	return src;
+double fsqrt32(double src){
+	double lo = 0, hi = src, mid;
+	for(int i = 0 ; i < 1000 ; i++){
+		mid = (lo+hi)/2;
+		if(mid*mid == src) return mid;
+		if(mid*mid > src) hi = mid;
+		else lo = mid;
+	}
+	return mid;	
+
+//return sqrt(src);
+	//return src;
 }
 
 // function use for double-precision 
