@@ -239,38 +239,14 @@ op fsqrt_d(src: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fsqrt.d %s, %s", dest, src)
 	image = format("0101101 00000 %s %3b %s 1010011", src, rm, dest)
 	action = {	
-		let domainError = 1;
-		let Nan = coerce(float(52,12),0b0111111111111111111111111111111111111111111111111111111111111111);
-
-		//If F[src] is NaN, a NaN shall be returned.
-		if(F[src]<62..52>==Nan<62..52> && F[src]<51..0>!=0) then
-			setF(dest,F[src]);
-			domainError = 0;
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = "fp_sqrt"(F[src]);
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
 		endif;
-
-		//If F[src] is ±0 or +Inf, F[src] shall be returned.
-		if(F[src]<62..0> == 0 || (F[src]<63..63> == 0 && F[src]<62..52> == 0b11111111111 && F[src]<51..0> == 0)) then
-			setF(dest,F[src]);
-			domainError = 0;
-		endif;
-
-		//If F[src] is -Inf or < 0, a domain error shall occur, and a NaN shall be returned
-		if(F[src]<63..63> == 1) then
-			SignalException(InvalidOperation);
-		//	FCSR<4..4> = 1;
-			setF(dest,Nan);
-			domainError = 0;
-		endif;
-
-		//If F[src] -> PosNormal, compute sqrt
-		if(!domainError) then	
-			let result = fsqrt64(F[src]);
-			let roundingMod = rm;
-		//	if roundingMod == 7 then
-		//		roundingMod = FCSR<7..5>;
-		//	endif;
-			let resultRound = roundingDouble(result,roundingMod);
-			setF(dest,resultRound);
+		if("fp_testexcept"("FP_INVALID")) then
+			CSRS[1] = 16;
+			F[dest]<63..0> = 0x7ff8000000000000;
 		endif;
 	}
 
@@ -279,22 +255,10 @@ op fmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1000011", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = F[src1]; //reg F[32, float(23,9)]
-		let r2 = F[src2];
-		let r3 = F[src3];
-		let roundingMod = rm;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-		//	FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			let result = r1*r2+r3;
-		//	if roundingMod == 7 then
-		//		roundingMod = FCSR<7..5>;
-		//	endif;
-			let resultRound = roundingDouble(result,roundingMod); //TODO fction d'arrondi, arrondi a la dizaine, l'unité,le dixième ? 
-			setF(dest,resultRound); 
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] * F[src2] + F[src3];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
 		endif;
 	}
 
@@ -302,22 +266,10 @@ op fmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1000111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = F[src1];
-		let r2 = F[src2];
-		let r3 = F[src3];
-		let roundingMod = rm;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-		//	FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			let result = r1*r2-r3;
-		//	if roundingMod == 7 then
-		//		roundingMod = FCSR<7..5>;
-		//	endif;
-			let resultRound = roundingDouble(result,roundingMod); 
-			setF(dest,resultRound); 
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = F[src1] * F[src2] - F[src3];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
 		endif;
 	}
 
@@ -325,22 +277,10 @@ op fnmadd_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fnmadd.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1001111", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = F[src1];
-		let r2 = F[src2];
-		let r3 = F[src3];
-		let roundingMod = rm;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-		//	FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			let result = -r1*r2-r3;
-		//	if roundingMod == 7 then
-		//		roundingMod = FCSR<7..5>;
-		//	endif;
-			let resultRound = roundingDouble(result,roundingMod); 
-			setF(dest,resultRound); 
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = -F[src1] * F[src2] - F[src3];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
 		endif;
 	}
 
@@ -348,22 +288,10 @@ op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 	syntax = format("fnmsub.d %s, %s, %s, %s", dest, src1, src2, src3)
 	image = format("%s 01 %s %s %3b %s 1001011", src3, src2, src1, rm, dest)
 	action = {	
-		let r1 = F[src1];
-		let r2 = F[src2];
-		let r3 = F[src3];
-		let roundingMod = rm;
-
-		//raise the invalid operation exception when the multiplicands are infinite and zero
-		if(r1<62..52> == 0b11111111111 && r1<51..0> == 0 && r2 == 0) || (r2<62..52> == 0b11111111111 && r2<51..0> == 0 && r1 == 0) then
-		//	FCSR<4..4> = 1;
-			SignalException(InvalidOperation);			
-		else
-			let result = -r1*r2+r3;
-		//	if roundingMod == 7 then
-		//		roundingMod = FCSR<7..5>;
-		//	endif;
-			let resultRound = roundingDouble(result,roundingMod); 
-			setF(dest,resultRound); 
+		"fp_clearexcept"("FP_ALLEXCEPT");
+		F[dest] = -F[src1] * F[src2] + F[src3];
+		if("fp_testexcept"("FP_INEXACT")) then
+			CSRS[1] = 1;
 		endif;
 	}
 
@@ -373,7 +301,7 @@ op fnmsub_d(src3: freg_t, src2: freg_t, src1: freg_t, rm: card(3), dest: freg_t)
 
 op fsgnj_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 	syntax = if src1 == src2 then 
-		format("fmv.s %s, %s", dest, src1)
+		format("fmv.d %s, %s", dest, src1)
 		else format("fsgnj.d %s, %s, %s", dest, src1, src2) endif 
 	image = format("0010001 %s %s 000 %s 1010011", src2, src1,  dest)
 	action = {			
@@ -383,7 +311,7 @@ op fsgnj_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 	
 op fsgnjn_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 	syntax = if src1 == src2 then
-		format("fneg.s %s, %s", dest, src1)
+		format("fneg.d %s, %s", dest, src1)
 		else format("fsgnjn.d %s, %s, %s", dest, src1, src2) endif
 	image = format("0010001 %s %s 001 %s 1010011", src2, src1,  dest)
 	action = {	
@@ -392,7 +320,7 @@ op fsgnjn_d(src2: freg_t, src1: freg_t,  dest: freg_t)
 		
 op fsgnjx_d(src2: freg_t, src1: freg_t, dest: freg_t)
 	syntax = if src1 == src2 then 
-		format("fabs.s %s, %s", dest, src1) 
+		format("fabs.d %s, %s", dest, src1) 
 		else format("fsgnjx.d %s, %s, %s", dest, src1, src2) endif
 	image = format("0010001 %s %s 010 %s 1010011", src2, src1, dest)
 	action = {	

@@ -1,1 +1,2 @@
 CODE_HEADER=#include <RV32G/emu.h>
+LIBADD=-lm

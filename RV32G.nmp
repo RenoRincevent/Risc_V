@@ -33,6 +33,7 @@ type address   = card(32)
 type index     = card( 5)
 type real      = float(23,9)
 type doublef   = float(52,12)
+type quadf	= float(112,16)
 type indexCSR	= card(12)
 
 include "nmp/config.nmp"
@@ -42,7 +43,7 @@ include "nmp/macros.nmp"
 // GLISS configuration
 let proc = "RV32G"         
 let bit_order = "uppermost"
-let gliss_isize = "32"
+let gliss_isize = "32,16"
 
 //let XLEN = 32
 // tester : let WORD_SIZE = 32
@@ -57,22 +58,22 @@ mode reg_t (r: index) = r
 	num = r
 	syntax =
 		switch ( r ) {
-		case  0:	"zero"
-		case  1:	"ra"
-		case  2: 	"sp"
-		case  3: 	"gp"
-		case  4: 	"tp"
-		case  5: 	"t0"
-		case  6: 	"t1"
-		case  7: 	"t2"
-		case  8:	"fp"
-		case  9:	"s1"
-		case 10:	"a0"
-		case 11:	"a1"
-		case 12:	"a2"
-		case 13:	"a3"
-		case 14:	"a4"
-		case 15:	"a5"
+		case  0:	"zero" //00000
+		case  1:	"ra"	//00001
+		case  2: 	"sp"	//00010
+		case  3: 	"gp"	//00011
+		case  4: 	"tp"	//00100
+		case  5: 	"t0"	//00101
+		case  6: 	"t1"	//00110
+		case  7: 	"t2"	//00111
+		case  8:	"fp"	//01000
+		case  9:	"s1"	//01001
+		case 10:	"a0"	//01010
+		case 11:	"a1"	//01011
+		case 12:	"a2"	//01100
+		case 13:	"a3"	//01101
+		case 14:	"a4"	//01110
+		case 15:	"a5"	//01111
 		case 16:	"a6"
 		case 17:	"a7"
 		case 18:	"s2"
@@ -132,17 +133,29 @@ mode freg_t (f: index) = f
 		}
 	image  = format ( "%5b", f )
 macro setF(d, v) = F[d] = v; 
-macro setD(d, v) = D[d] = v;
+//macro setD(d, v) = D[d] = v;
 
 mode CSRs (i: indexCSR) = i
 	num = i
 	syntax =
 		switch (i) {
-		case 1: "fflags"
-		case 2: "frm"
-		case 3: "fcsr"
-		case 768: "mstatus"
-		default: "unknown"
+		case 0: 	"ustatus"
+		case 1: 	"fflags"
+		case 2: 	"frm"
+		case 3: 	"fcsr"
+		case 4: 	"uie"
+		case 5: 	"utvec"
+		case 64: 	"uscratch"
+		case 65:	"uepc"
+		case 66: 	"ucause"
+		case 67:	"utval"
+		case 68:	"uip"	
+		case 768: 	"mstatus"
+		case 3072:	"cycle"
+		case 3073:	"time"
+		case 3074:	"instret"
+		case 3860:	"mhartid"
+		default: 	"unknown"
 		}
 	image = format ("%12b",i)
 macro setCSRS(d, v) = CSRS[d] = v;
@@ -179,6 +192,7 @@ op allinstr =
 	| rv32a // atomic operations 32 bits
 	| rv32f // single floating point 32 bits
 	| rv32d // double floating point 
+	//| rv32c
 	
 
 op init ()
@@ -196,3 +210,4 @@ include "nmp/control.nmp"
 include "nmp/special.nmp"
 include "nmp/RV32F.nmp"
 include "nmp/RV32D.nmp"
+include "nmp/RV32C.nmp"

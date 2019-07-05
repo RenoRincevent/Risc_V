@@ -46,6 +46,8 @@ extern  "C" {
 #define fp_clearexcept(flag) feclearexcept(flag)  /* clear a set of exceptions */
 #define fp_raiseexcept(flag) feraiseexcept(flag)  /* 'set' a set of exceptions */
 #define fp_testexcept(flag)  fetestexcept(flag)   /* test a set of exceptions */
+#define fp_sqrt(x) sqrt(x)
+#define fp32_sqrt(x) sqrtf(x)
 
 #define BreakPoint		0
 #define	IntegerOverflow		1

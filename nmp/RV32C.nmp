@@ -1,0 +1,49 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2019, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+// Compressed Operations
+op rv32c =
+	  c_lw
+	//| c_lwsp
+	//| c_flw
+	//| c_flwsp
+	//| c_fld
+	//| c_fldsp
+
+// load and store
+//l'index des reg_t font 5 bits, alors que l'index de ces registre font uniquement 3 bits ?
+op c_lw(uimm: card(7), base: reg_t, dest: reg_t) 
+	syntax = format("c.lw %s, %d(%s)", dest, uimm, base) 
+	image = format("010 %3b %3b %2b %3b 00", uimm<5..3>, base<2..0>, uimm<2..2>::uimm<6..6>,dest<2..0>)
+	action = {
+		let vAddr = R[base<2..0>+8] + uimm;
+		setR(dest+8, coerce(word,M32[vAddr]));
+	}
+
+
+
+
+
+
+
+
+
+

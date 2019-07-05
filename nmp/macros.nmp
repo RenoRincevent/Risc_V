@@ -38,6 +38,9 @@ canon float(52,12) "fsqrt64"(src: float(52,12))
 canon word "fp_testexcept"(word)
 canon "fp_clearexcept"(word)
 canon "fp_raiseexcept"(word)
+canon float(52,12) "fp_sqrt"(src: float(52,12))
+canon float(23,9) "fp32_sqrt"(src: float(23,9))
+
 canon word "FP_INEXACT"
 canon word "FP_DIVBYZERO"
 canon word "FP_UNDERFLOW"
