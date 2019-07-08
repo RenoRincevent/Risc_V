@@ -22,21 +22,308 @@
 // Compressed Operations
 op rv32c =
 	  c_lw
-	//| c_lwsp
-	//| c_flw
-	//| c_flwsp
-	//| c_fld
-	//| c_fldsp
+	| c_lwsp
+	| c_flw
+	| c_flwsp
+	| c_fld
+	| c_fldsp
+	| c_sw
+	| c_swsp
+	| c_fsw
+	| c_fswsp
+	| c_fsd
+	| c_fsdsp
+	| c_slli
+	| c_srai
+	| c_srli
+	| c_beqz
+	| c_bnez
+	| c_j
+	| c_jr
+	| c_add
+	| c_addi
+	| c_addi16sp
+	| c_addi4spn
+	| c_sub
+	| c_and
+	| c_andi
+	| c_or
+	| c_xor
+	| c_mv
+	| c_li
+	| c_lui
+	| c_jal
+	| c_jalr
+	| c_ebreak
 
 // load and store
-//l'index des reg_t font 5 bits, alors que l'index de ces registre font uniquement 3 bits ?
-op c_lw(uimm: card(7), base: reg_t, dest: reg_t) 
-	syntax = format("c.lw %s, %d(%s)", dest, uimm, base) 
-	image = format("010 %3b %3b %2b %3b 00", uimm<5..3>, base<2..0>, uimm<2..2>::uimm<6..6>,dest<2..0>)
+op c_lw(offset: card(12), base: reg_c_t, dest: reg_c_t)
+	syntax = format("c.lw %s, %d(%s)", dest, offset, base)
+	image = format("010 %3b %3b %2b %3b 00", offset<5..3>, base, offset<2..2>::offset<6..6>,dest)
 	action = {
-		let vAddr = R[base<2..0>+8] + uimm;
-		setR(dest+8, coerce(word,M32[vAddr]));
+		//let vAddr = R[base+8] + offset;
+		//setR(dest+8, coerce(word,M32[vAddr]));
 	}
+
+op c_lwsp(offset: card(12), dest: reg_t) 
+	syntax = format("c.lwsp %s, %d(sp)", dest, offset) 
+	image = format("010 %1b %5b %5b 10", offset<5..5>, dest, offset<4..2>::offset<7..6>)
+	action = {
+//		let vAddr = R[2] + offset;
+//		setR(dest, coerce(word,M32[vAddr]));
+	}
+
+op c_flw(offset: card(12), base: reg_c_t, dest: freg_c_t)
+	syntax = format("c.flw %s, %d(%s)", dest, offset, base)
+	image = format("011 %3b %3b %2b %3b 00", offset<5..3>, base, offset<2..2>::offset<6..6>,dest)
+	action = {
+		//let vAddr = R[base+8] + offset;
+		//F[dest+8]<31..0> = M32HF[vAddr];
+	}
+
+op c_flwsp(offset: card(12), dest: freg_t) 
+	syntax = format("c.flwsp %s, %d(sp)", dest, offset) 
+	image = format("011 %1b %5b %5b 10", offset<5..5>, dest, offset<4..2>::offset<7..6>)
+	action = {
+//		let vAddr = R[2] + offset;
+		//F[dest]<31..0> = M32HF[vAddr];
+	}
+
+op c_fld(offset: card(12), base: reg_c_t, dest: freg_c_t)
+	syntax = format("c.fld %s, %d(%s)", dest, offset, base)
+	image = format("001 %3b %3b %2b %3b 00", offset<5..3>, base, offset<7..6>,dest)
+	action = {
+		//let vAddr = R[base+8] + offset;
+		//F[dest+8] = M32F[vAddr];
+	}
+
+op c_fldsp(offset: card(12), dest: freg_t) 
+	syntax = format("c.fldsp %s, %d(sp)", dest, offset) 
+	image = format("001 %1b %5b %5b 10", offset<5..5>, dest, offset<4..2>::offset<7..6>)
+	action = {
+//		let vAddr = R[2] + offset;
+		//F[dest] = M32F[vAddr];
+	}
+
+op c_sw(offset: card(12), src1: reg_c_t, src2: reg_c_t)
+	syntax = format("c.sw %s, %d(%s)", src2, offset, src1)
+	image = format("110 %3b %3b %2b %3b 00", offset<5..3>, src1, offset<2..2>::offset<6..6>,src2)
+	action = {
+		//let vAddr = R[8+src1] + offset;
+		//let data = R[8+src2];
+		//M32[vAddr] = data;
+	}
+
+op c_swsp(offset: card(12), src2: reg_t) 
+	syntax = format("c.swsp %s, %d(sp)", src2, offset) 
+	image = format("110 %6b %5b 10", offset<5..2>::offset<7..6>, src2)
+	action = {
+		//let vAddr = R[2] + offset;
+		//let data = R[src2];
+		//M32[vAddr] = data;
+	}
+
+op c_fsw(offset: card(12), src1: reg_c_t, src2: reg_c_t)
+	syntax = format("c.fsw %s, %d(%s)", src2, offset, src1)
+	image = format("111 %3b %3b %2b %3b 00", offset<5..3>, src1, offset<2..2>::offset<6..6>,src2)
+	action = {
+		//let vAddr = R[8+src1] + offset;
+		//let data : float(23,9) = F[8+src2]<31..0>;
+		//M32HF[vAddr] = data;	
+	}
+
+op c_fswsp(offset: card(12), src2: freg_t) 
+	syntax = format("c.fswsp %s, %d(sp)", src2, offset) 
+	image = format("110 %6b %5b 10", offset<5..2>::offset<7..6>, src2)
+	action = {
+		//let vAddr = R[2] + offset;
+		//let data = float(23,9) = F[src2]<31..0>;
+		//M32HF[vAddr] = data;
+	}
+
+op c_fsd(offset: card(12), src1: reg_c_t, src2: freg_c_t)
+	syntax = format("c.fsd %s, %d(%s)", src2, offset, src1)
+	image = format("101 %3b %3b %2b %3b 00", offset<5..3>, src1, offset<7..6>,src2)
+	action = {
+		//let vAddr = R[8+src1] + offset;
+		//let data = F[8+src2];
+		//M32F[vAddr] = data;	
+	}
+
+op c_fsdsp(offset: card(12), src2: freg_t) 
+	syntax = format("c.fsdsp %s, %d(sp)", src2, offset) 
+	image = format("101 %6b %5b 10", offset<5..3>::offset<8..6>, src2)
+	action = {
+		//let vAddr = R[2] + offset;
+		//let data = F[src2];
+		//M32F[vAddr] = data;
+	}
+
+op c_slli(offset: card(12), dest: reg_t)
+	syntax = format("c.slli %s, %d",dest,offset)
+	image = format("000 %1b %5b %5b 10", offset<5..5>,dest,offset<4..0>)
+	action = {
+		//setR(dest,R[dest] << offset);
+	}
+
+op c_srai(offset: card(12), dest: reg_c_t)
+	syntax = format("c.srai %s, %d",dest,offset)
+	image = format("000 %1b 01 %3b %5b 01", offset<5..5>,dest,offset<4..0>)
+	action = {
+		//setR(8+dest, coerce(word, R[8+dest]) >> offset);
+	}
+
+op c_srli(offset: card(12), dest: reg_c_t)
+	syntax = format("c.srli %s, %d",dest,offset)
+	image = format("100 %1b 00 %3b %5b 01", offset<5..5>,dest,offset<4..0>)
+	action = {
+		//setR(8+dest, coerce(uword, R[8+dest]) >> offset);
+	}
+
+op c_beqz(offset: int(12), src1: reg_c_t)
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax = format("c.beqz %s, %d",src1,offset)
+	image = format("110 %3b %3b %5b 01", offset<8..8>::offset<4..3>,src1,offset<7..6>::offset<2..1>::offset<5..5>)
+	action = {
+		//let condition = R[8+src1] == 0;
+		//if condition then
+		//	NPC = PC + tgt_offset;
+		//endif;
+	}
+
+op c_bnez(offset: int(12), src1: reg_c_t)
+	tgt_offset = coerce(int(13), offset :: 0<0..0>)
+	syntax = format("c.bnez %s, %d",src1,offset)
+	image = format("111 %3b %3b %5b 01", offset<8..8>::offset<4..3>,src1,offset<7..6>::offset<2..1>::offset<5..5>)
+	action = {
+		//let condition = R[8+src1] != 0;
+		//if condition then
+		//	NPC = PC + tgt_offset;
+		//endif;
+	}
+
+op c_j(offset: int(12))
+	syntax = format("c.jal %d",offset)
+	image = format("101 %11b 01",offset<11..11>::offset<4..4>::offset<9..8>::offset<10..10>::offset<6..6>::offset<7..7>::offset<3..1>::offset<5..5>)
+	action = {
+		//empty
+	}
+
+op c_jr(src1: reg_t)
+	syntax = format("c.jalr %s",src1)
+	image = format("100 0 %5b 00000 10",src1)
+	action = {
+		//empty
+	}
+
+op c_add(dest: reg_t, src2: reg_t)
+	syntax = format("c.add %s, %s",dest,src2)
+	image = format("100 1 %5b %5b 10",dest,src2)
+	action = {
+		//setR(dest, R[dest] + R[src2]);
+	}
+
+op c_addi(dest: reg_t, offset: int(12))
+	syntax = format("c.addi %s, %d",dest,offset)
+	image = format("000 %1b %5b %5b 01",offset<5..5>,dest,offset<4..0>)
+	action = {
+		//setR(dest, R[dest] + coerce(word,offset));
+	}
+
+op c_addi16sp(offset: int(12))
+	syntax = format("c.addi16sp %d",offset)
+	image = format("011 %1b 00010 %5b 01",offset<9..9>,offset<4..4>::offset<6..6>::offset<8..7>::offset<5..5>)
+	action = {
+		//setR(2, R[2] + coerce(word,offset));
+	}
+
+op c_addi4spn(dest: reg_c_t, offset: card(12))
+	syntax = format("c.addi4spn %s %d",dest,offset)
+	image = format("000 %8b %3b 00",offset<5..4>::offset<9..6>::offset<2..2>::offset<3..3>,dest)
+	action = {
+		//setR(8+dest, R[2] + coerce(word,offset));
+	}
+
+op c_sub(dest: reg_c_t, src2: reg_c_t)
+	syntax = format("c.sub %s, %s",dest,src2)
+	image = format("100011 %3b 00 %3b 01",dest,src2)
+	action = {
+		//setR(8+dest,R[8+dest] - R[8+src2]);
+	}
+
+op c_and(dest: reg_c_t, src2: reg_c_t)
+	syntax = format("c.and %s, %s",dest,src2)
+	image = format("100011 %3b 11 %3b 01",dest,src2)
+	action = { 
+		//setR(8+dest, R[8+dest] & R[8+src2]);
+	}
+
+op c_andi(dest: reg_c_t, offset: int(12))
+	syntax = format("c.andi %s, %d",dest,offset)
+	image = format("100 %1b 10 %3b %5b 01",offset<5..5>,dest,offset<4..0>)
+	action = { 
+		//setR(8+dest, R[8+dest] & coerce(word,offset));
+	}
+
+op c_or(dest: reg_c_t, src2: reg_c_t)
+	syntax = format("c.or %s, %s",dest,src2)
+	image = format("100011 %3b 10 %3b 01",dest,src2)
+	action = {
+		//setR(8+dest, R[8+dest] | R[8+src2]);
+	}
+
+op c_xor(dest: reg_c_t, src2: reg_c_t)
+	syntax = format("c.xor %s, %s",dest,src2)
+	image = format("100011 %3b 01 %3b 01",dest,src2)
+	action = {
+		//setR(8+dest, R[8+dest] ^ R[8+src2]);
+	}
+
+op c_mv(dest: reg_t, src2: reg_t)
+	syntax = format("c.mv %s, %s",dest,src2)
+	image = format("100 0 %5b %5b 10",dest,src2)
+	action = {
+		//setR(dest,R[src2]);
+	}
+
+op c_li(dest: reg_t, offset: int(12))
+	syntax = format("c.li %s, %d",dest,offset)
+	image = format("010 %1b %5b %5b 01",offset<5..5>,dest,offset<4..0>)
+	action = {
+		//setR(dest,coerce(word,offset));
+	}
+
+op c_lui(dest: reg_t, offset: int(20))
+	syntax = format("c.lui %s, %d",dest,offset)
+	image = format("011 %1b %5b %5b 01",offset<17..17>,dest,offset<16..12>)
+	action = {
+		//setR(dest, coerce(word, offset<17..12>) << 12);
+	}
+
+op c_jal(offset: int(12))
+	syntax = format("c.jal %d",offset)
+	image = format("011 %11b 01",offset<11..11>::offset<4..4>::offset<9..8>::offset<10..10>::offset<6..6>::offset<7..7>::offset<3..1>::offset<5..5>)
+	action = {
+		//empty
+	}
+
+op c_jalr(src1: reg_t)
+	syntax = format("c.jalr %s",src1)
+	image = format("100 1 %5b 00000 10",src1)
+	action = {
+		//empty
+	}
+
+op c_ebreak()
+	syntax = "c.ebreak"
+	image = "100 1 00000 00000 10"
+	action = {
+		SignalException(BreakPoint);
+	}
+
+
+
+
 
 
 
