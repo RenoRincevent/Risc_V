@@ -65,6 +65,7 @@ let SystemCall = 3
 let Trap = 4
 let InvalidOperation = 5
 let IllegalInstruction = 6
+let Machine = 7
 
 macro SignalException(e) = "SignalException"(e)
 

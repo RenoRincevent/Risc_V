@@ -45,13 +45,14 @@ op fence(predecessor: card(4), successor: card(4), ignore1: card(4), ignore2: re
 op csrrw(srcdest: CSRs, source: reg_t, dest: reg_t) 
 	syntax = if srcdest==1 then 
 		format("fsflags %s, %s",dest,source)
-		else format("csrrw %s, %s, %s", dest, srcdest, source) endif
+		else if srcdest==3 then 
+		format("fscsr %s, %s",dest,source)
+		else format("csrrw %s, %s, %s", dest, srcdest, source) endif endif
 	image  = format("%s %s 001 %s 1110011", srcdest, source, dest)
 	action = {
 		let t = CSRS[srcdest];
 		CSRS[srcdest] = R[source];
 		setR(dest,t);
-		//"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
 		//SignalException(Trap);
 	}
 
@@ -60,13 +61,14 @@ op csrrs(srcdest: CSRs, source: reg_t, dest: reg_t)
 		format("frcsr %s",dest)
 		else if srcdest==1 && source==0 then
 		format("frflags %s",dest)
-		else format("csrrs %s, %s, %s", dest, srcdest, source) endif endif
+		else if srcdest==2 && source==0 then
+		format("frrm %s",dest)
+		else format("csrrs %s, %s, %s", dest, srcdest, source) endif endif endif
 	image  = format("%12b %s 010 %s 1110011", srcdest, source, dest)
 	action = {
 		let t = CSRS[srcdest];
 		CSRS[srcdest] = t<31..0> | R[source]<31..0>;
 		setR(dest,t);
-		//"printf"("valeur a la sortie\n\tcsr: %d\n\tdest: %d\n\tsource: %d\n",coerce(word,CSRS[srcdest]),R[dest],R[source]);
 		//SignalException(Trap);
 	}
 

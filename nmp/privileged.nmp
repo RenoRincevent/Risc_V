@@ -1,0 +1,69 @@
+/*
+ *	RISC-V Instruction Set
+ *
+ *	This file is part of GLISS
+ *	Copyright (c) 2017, IRIT UPS.
+ *
+ *	GLISS is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLISS is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLISS; if not, write to the Free Software
+ *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+op all_privileged =
+	  uret
+	| sret
+	| mret
+	| wfi
+	| sfence_vma
+
+op uret()
+	syntax = "uret"
+	image = "0000000 00010 00000 000 00000 1110011"
+	action = {
+		//empty simulation
+	}
+
+op sret()
+	syntax = "sret"
+	image = "0001000 00010 00000 000 00000 1110011"
+	action = {
+		//empty simulation
+	}
+
+op mret()
+	syntax = "mret"
+	image = "0011000 00010 00000 000 00000 1110011"
+	action = {
+		SignalException(Machine);
+		NPC = CSRS[833];  //CSRS[833] = CSRs[mepc]
+		//TODO set the privileged mode to CSRs[mstatus].MPP
+		CSRS[768]<3..3> = CSRS[768]<7..7>; //set CSRs[mstatus].MIE to CSRs[mstatus].MPIE
+		CSRS[768]<7..7> = 1;
+		//TODO if user mode is supported, set CSRs[mstatus].MPP to 0
+		
+		
+	}
+
+op wfi()
+	syntax = "wfi"
+	image = "0001000 00101 00000 000 00000 1110011"
+	action = {
+		//empty simulation
+	}
+
+op sfence_vma(src1: reg_t, src2: reg_t)
+	syntax = format("sfence.vma %s, %s",src1,src2)
+	image = format("0001001 %5b %5b 000 00000 1110011",src1,src2)
+	action = {
+		//empty simulation
+	}
