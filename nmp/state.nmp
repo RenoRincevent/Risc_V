@@ -26,18 +26,12 @@ mem M   [32,  byte]
 mem M16	[32,  half] alias = M
 //changer M32 en MWord pour plus de lisibilité pour rv64
 mem M32	[32,  word] alias = M
-mem M64	[32,  dword] alias = M
 mem M32HF [32,float(23,9)] alias = M
 mem M32F [32, float(52,12)] alias = M
-//mem M32D [32,doublef] alias = M
 
 reg PC  	[ 1, address] is_pc = 1
 reg NPC 	[ 1, address]
 reg R		[32, word]
 reg F		[32, float(52,12)]
-//reg D		[32, doublef]
 reg LLbit	[ 1, card(1)]
 reg CSRS	[4096,address]
-
-
-

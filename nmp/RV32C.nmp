@@ -304,7 +304,7 @@ op c_lui(dest: reg_t, offset: int(20))
 op c_jal(offset: int(12))
 	tgt_offset = coerce(int(32), offset :: 0<0..0>)
 	syntax = format("c.jal %d",offset)
-	image = format("011 %11b 01",offset<11..11>::offset<4..4>::offset<9..8>::offset<10..10>::offset<6..6>::offset<7..7>::offset<3..1>::offset<5..5>)
+	image = format("001 %11b 01",offset<11..11>::offset<4..4>::offset<9..8>::offset<10..10>::offset<6..6>::offset<7..7>::offset<3..1>::offset<5..5>)
 	action = {
 		//R[1] = PC + 2;
 		//NPC = PC + tgt_offset;

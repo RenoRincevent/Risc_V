@@ -28,21 +28,25 @@ op rv64m =
 	| divuw
 	| remw
 	| remuw
-	
+
 
 op mulw(multiplier: reg_t, multiplicand: reg_t, dest: reg_t)
 	syntax = format("mulw %s, %s, %s", dest, multiplicand, multiplier)
 	image = format("0000001 %s %s 000 %s 0111011", multiplicand, multiplier, dest)
 	action = {
-		// empty, no simulation
-	} 
+		if dest != 0 then
+			R[dest]<31..0> = (R[multiplier]*R[multiplicand])<31..0>;
+		endif;
+	}
 
 op divw(divisor: reg_t, dividend: reg_t, dest: reg_t)
 	syntax = format("divw %s, %s, %s", dest, dividend, divisor)
 	image = format("0000001 %s %s 100 %s 0111011", divisor, dividend, dest)
 	action = {
-		// empty, no simulation
-	} 
+		if dest != 0 then
+			R[dest]<31..0> = (R[multiplier]/R[multiplicand])<31..0>;
+		endif;
+	}
 
 op divuw(divisor: reg_t, dividend: reg_t, dest: reg_t)
 	syntax = format("divuw %s, %s, %s", dest, dividend, divisor)
