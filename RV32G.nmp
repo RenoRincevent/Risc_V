@@ -33,7 +33,6 @@ type address   = card(32)
 type index     = card( 5)
 type real      = float(23,9)
 type doublef   = float(52,12)
-type quadf	= float(112,16)
 type indexCSR	= card(12)
 
 include "nmp/config.nmp"
@@ -44,14 +43,6 @@ include "nmp/macros.nmp"
 let proc = "RV32G"
 let bit_order = "uppermost"
 let gliss_isize = "32,16"
-
-//let XLEN = 32
-// tester : let WORD_SIZE = 32
-
-
-
-//let bit_image_order =  1
-
 
 // modes
 mode reg_t (r: index) = r
@@ -192,6 +183,45 @@ mode CSRs (i: indexCSR) = i
 	image = format ("%12b",i)
 macro setCSRS(d, v) = CSRS[d] = v;
 
+//Modifier Gliss pour que le switch accepte autre chose que les int
+// mode reg_Exclu_rd2 (j: enum(0..1,3..31))
+// 	num = j
+// 	syntax =
+// 		switch ( j ) {
+// 		case  0:	"zero" //00000
+// 		case  1:	"ra"	//00001
+// 		case  3: 	"gp"	//00011
+// 		case  4: 	"tp"	//00100
+// 		case  5: 	"t0"	//00101
+// 		case  6: 	"t1"	//00110
+// 		case  7: 	"t2"	//00111
+// 		case  8:	"fp"	//01000
+// 		case  9:	"s1"	//01001
+// 		case 10:	"a0"	//01010
+// 		case 11:	"a1"	//01011
+// 		case 12:	"a2"	//01100
+// 		case 13:	"a3"	//01101
+// 		case 14:	"a4"	//01110
+// 		case 15:	"a5"	//01111
+// 		case 16:	"a6"
+// 		case 17:	"a7"
+// 		case 18:	"s2"
+// 		case 19:	"s3"
+// 		case 20:	"s4"
+// 		case 21:	"s5"
+// 		case 22:	"s6"
+// 		case 23:	"s7"
+// 		case 24:	"s8"
+// 		case 25:	"s9"
+// 		case 26:	"s10"
+// 		case 27:	"s11"
+// 		case 28:	"t3"
+// 		case 29:	"t4"
+// 		case 30:	"t5"
+// 		case 31:	"t6"
+// 		}
+// 	image  = format ( "%5b", j )
+
 mode IMM16(n: half) = n
 	syntax = format("#%d", n)
 	image = format("%16b", n)
@@ -200,10 +230,10 @@ mode UIMM16(n: uhalf) = n
    syntax = format ( "#%d", n )
    image  = format ( "%16b", n )
 
-
+op multi = instruction_G | instruction_C
 
 // top-level instructions
-op instruction (x: allinstr)
+op instruction_G (x: allinstr)
 	syntax = x.syntax
 	image = x.image
 	action = {
@@ -211,6 +241,19 @@ op instruction (x: allinstr)
 		x.action;
 		PC = NPC;
 	}
+	instruction_set_select = M32[PC]<1..0> == 0b11 && M32[PC]<4..2> != 0b111
+	instruction_set_name = "instruction_G"
+
+op instruction_C (x: allrv32c)
+	syntax = x.syntax
+	image = x.image
+	action = {
+		NPC = PC + 2;
+		x.action;
+		PC = NPC;
+	}
+	instruction_set_select = M16[PC]<1..0> != 0b11
+	instruction_set_name = "instruction_C"
 
 op allinstr =
 	  all_rrr
@@ -224,9 +267,10 @@ op allinstr =
 	| rv32a // atomic operations 32 bits
 	| rv32f // single floating point 32 bits
 	| rv32d // double floating point
-	| rv32c
 	| all_privileged
 
+op allrv32c =
+	rv32c
 
 op init ()
 	action = {
