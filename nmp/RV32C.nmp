@@ -210,7 +210,6 @@ op c_j(offset: int(11))
 	action = {
 		let tgt_offset : int(32) = coerce(word,offset<10..0>::0b0);
 		NPC = PC + tgt_offset;
-		"printf"("\tValeur de l'offset : %d(%08X)\n",tgt_offset,tgt_offset);
 	}
 
 op c_jr(src1: reg_t)
@@ -326,7 +325,6 @@ op c_jalr(src1: enum(1..31))
 	syntax = format("c.jalr %d",src1)
 	image = format("100 1 %5b 00000 10",src1)
 	action = {
-		"printf"("\tValeur du registre source : %d(%08X)\n",R[src1],R[src1]);
 		let t = PC + 2;
 		NPC = R[src1];
 		R[1] = t;

@@ -230,9 +230,9 @@ mode UIMM16(n: uhalf) = n
    syntax = format ( "#%d", n )
    image  = format ( "%16b", n )
 
+// top-level instructions
 op multi = instruction_G | instruction_C
 
-// top-level instructions
 op instruction_G (x: allinstr)
 	syntax = x.syntax
 	image = x.image
@@ -270,7 +270,7 @@ op allinstr =
 	| all_privileged
 
 op allrv32c =
-	rv32c
+	rv32c //Compressed Instructions 32 bit
 
 op init ()
 	action = {

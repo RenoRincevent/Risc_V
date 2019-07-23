@@ -45,20 +45,20 @@ op mret()
 	image = "0011000 00010 00000 000 00000 1110011"
 	action = {
 		SignalException(Machine);
-		NPC = CSRS[833];  //CSRS[833] = CSRs[mepc]
+		NPC = CSRS[833];  //CSRS[833] => CSRs[mepc]
 		//TODO set the privileged mode to CSRs[mstatus].MPP
 		CSRS[768]<3..3> = CSRS[768]<7..7>; //set CSRs[mstatus].MIE to CSRs[mstatus].MPIE
 		CSRS[768]<7..7> = 1;
 		//TODO if user mode is supported, set CSRs[mstatus].MPP to 0
-		
-		
+
+
 	}
 
 op wfi()
 	syntax = "wfi"
 	image = "0001000 00101 00000 000 00000 1110011"
 	action = {
-		//empty simulation
+		"idle_While_No_Interrupts_Pending"();
 	}
 
 op sfence_vma(src1: reg_t, src2: reg_t)

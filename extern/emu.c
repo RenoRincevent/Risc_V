@@ -3,7 +3,7 @@
  *
  *	This file is part of GLISS2
  *	Copyright (c) 2017, IRIT UPS.
- * 
+ *
  *	GLISS is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +15,7 @@
  *	GNU General Public License for more details.
  *
  *	You should have received a copy of the GNU General Public License
- *	along with GLISS2; if not, write to the Free Software 
+ *	along with GLISS2; if not, write to the Free Software
  *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -89,30 +89,5 @@ uint32_t reserved(int memoryWord){
 	}
 }
 
-/**
- * Function use for Single-Precision Floating-Point Computational Instructions
- */
-float rounding(float result, int rm){
-	return result;
-}
-double fsqrt32(double src){
-	double lo = 0, hi = src, mid;
-	for(int i = 0 ; i < 1000 ; i++){
-		mid = (lo+hi)/2;
-		if(mid*mid == src) return mid;
-		if(mid*mid > src) hi = mid;
-		else lo = mid;
-	}
-	return mid;	
-
-//return sqrt(src);
-	//return src;
-}
-
-// function use for double-precision 
-double roundingDouble(double result, int rm){
-	return result;
-}
-double fsqrt64(double src){
-	return src;
+void idle_While_No_Interrupts_Pending(){
 }

@@ -18,7 +18,7 @@
  *	along with GLISS; if not, write to the Free Software
  *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-  
+
 
 // load instructions
 op all_loads_32 =
@@ -27,7 +27,7 @@ op all_loads_32 =
 	| lh
 	| lhu
 	| lw
-	
+
 // store instructions
 op all_stores_32 =
 	  sb
@@ -35,7 +35,6 @@ op all_stores_32 =
 	| sw
 
 // load instructions
-//TODO tester si offset negatif
 op lb(offset: int(12), base: reg_t, dest: reg_t)
 	syntax = format("lb %s, %d(%s)", dest, offset, base)
 	image  = format("%12b %s 000 %s 0000011", offset, base, dest)
@@ -49,7 +48,11 @@ op lb(offset: int(12), base: reg_t, dest: reg_t)
 			vAddr = vAddr + offset;
 		endif;
 		let data = M[vAddr];
-		setR(dest, data<31..0>);
+		if data<7..7> == 1 then
+			setR(dest,0xffffff::data<7..0>);
+		else
+			setR(dest,0x000000::data<7..0>);
+		endif;
 	}
 
 op lbu(offset: int(12), base: reg_t, dest: reg_t)
@@ -110,11 +113,9 @@ op lw(offset: int(12), base: reg_t, dest: reg_t)
 		else
 			vAddr = vAddr + offset;
 		endif;
-		"printf"("\trecuperation du mot memoire a l addresse %08X\n",vAddr);
-		"printf"("\tvaleur du mot memoire: %08X\n",M32[vAddr]);
 		setR(dest, coerce(word,M32[vAddr]));
 	}
-	
+
 
 // store instructions
 op sb(offset: int(12), src: reg_t, base: reg_t)
@@ -163,7 +164,4 @@ op sw(offset: int(12), src: reg_t, base: reg_t)
 			vAddr = vAddr + offset;
 		endif;
 		M32[vAddr] = coerce(word,dataword);
-		"printf"("valeur mise en memoire: %08X\n",coerce(word,dataword));
-		"printf"("valeur avant convertion: %08X\n",dataword);
 	}
-

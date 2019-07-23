@@ -24,7 +24,7 @@ include "nmp/state.nmp"
 include "nmp/macros.nmp"
 
 // GLISS configuration
-let proc = "rv64"         
+let proc = "rv64"
 let bit_order = "uppermost"
 let gliss_isize = "32"
 //let bit_image_order =  1
@@ -38,6 +38,8 @@ type half      = int (16)
 type word      = int (64)
 type address   = card(64)
 type index     = card( 5)
+
+let XLEN = 64;
 
 
 // modes
@@ -79,7 +81,7 @@ mode reg_t (r: index) = r
 		case 31:	"t6"
 		}
 	image  = format ( "%5b", r )
-macro setR(d, v) = if d != 0 then R[d] = v; endif 
+macro setR(d, v) = if d != 0 then R[d] = v; endif
 
 mode freg_t (f: index) = f
 	num = f
@@ -163,7 +165,7 @@ op init ()
 	action = {
 		R[0] = 0;
 	}
-	
+
 
 
 
@@ -178,9 +180,8 @@ include "nmp/RV32D.nmp"
 
 // Additionnal files for RV64i
  include "nmp/RV64I_alu.nmp"
- include "nmp/RV64I_mem.nmp"
- include "nmp/RV64M.nmp"
- include "nmp/RV64A.nmp"
- include "nmp/RV64F.nmp"
- include "nmp/RV64D.nmp"
-
+// include "nmp/RV64I_mem.nmp"
+// include "nmp/RV64M.nmp"
+// include "nmp/RV64A.nmp"
+// include "nmp/RV64F.nmp"
+// include "nmp/RV64D.nmp"

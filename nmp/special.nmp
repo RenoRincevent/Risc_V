@@ -74,11 +74,14 @@ op csrrs(srcdest: CSRs, source: reg_t, dest: reg_t)
 		//SignalException(Trap);
 	}
 
-op csrrc(srcdest: card(12), source: reg_t, dest: reg_t)
+op csrrc(srcdest: CSRs, source: reg_t, dest: reg_t)
 	syntax = format("csrrc %s, %d, %s", dest, srcdest, source)
 	image  = format("%12b %s 011 %s 1110011", srcdest, source, dest)
 	action = {
-		SignalException(Trap);
+		let t = CSRS[srcdest];
+		CSRS[srcdest] = t & (~R[source]);
+		setR(dest,t);
+		//SignalException(Trap);
 	}
 
 op csrrwi(srcdest: CSRs, zimm: card(5), dest: reg_t)
@@ -90,21 +93,27 @@ op csrrwi(srcdest: CSRs, zimm: card(5), dest: reg_t)
 		//SignalException(Trap);
 	}
 
-op csrrsi(srcdest: card(12), zimm: card(5), dest: reg_t)
+op csrrsi(srcdest: CSRs, zimm: card(5), dest: reg_t)
 	syntax = format("csrrsi %s, %d, %d", dest, srcdest, zimm)
 	image  = format("%12b %5b 110 %s 1110011", srcdest, zimm, dest)
 	action = {
-		SignalException(Trap);
+		let t = CSRS[srcdest];
+		CSRS[srcdest] = t | zimm;
+		setR(dest,t);
+		//SignalException(Trap);
 	}
 
-op csrrci(srcdest: card(12), zimm: card(5), dest: reg_t)
+op csrrci(srcdest: CSRs, zimm: card(5), dest: reg_t)
 	syntax = format("csrrci %s, %d, %d", dest, srcdest, zimm)
 	image  = format("%12b %5b 111 %s 1110011", srcdest, zimm, dest)
 	action = {
-		SignalException(Trap);
+		let t = CSRS[srcdest];
+		CSRS[srcdest] = t & (~zimm);
+		setR(dest,t);
+		//SignalException(Trap);
 	}
 
-	op ecall()
+op ecall()
 	syntax = "ecall"
 	image  = "000000000000 00000 000 00000 1110011"
 	action = {

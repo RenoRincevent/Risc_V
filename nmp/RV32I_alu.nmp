@@ -22,7 +22,7 @@
 
 // Integer and Bitwise Register-Register Operations
 op all_rrr =
-	  add 
+	  add
 	| and
 	| or
 	| sll
@@ -53,10 +53,10 @@ op all_alu =
 
 // RV32I Integer Register-Immediate Instructions
 //// ADDI, LI, MV, NOP
-op addi(imm: int(12), src: reg_t, dest: reg_t) //DONE
+op addi(imm: int(12), src: reg_t, dest: reg_t)
 	syntax =
 		if dest == 0 && src == 0 && imm == 0
-		then "nop" else 
+		then "nop" else
 		if src == 0
 		then format("li %s, %d", dest, imm) else if imm == 0
 		then format("mv %s, %s", dest, src)
@@ -66,15 +66,15 @@ op addi(imm: int(12), src: reg_t, dest: reg_t) //DONE
 	action = {
 		setR(dest, R[src] + coerce(word,imm));
 	}
-	
+
 //// SLTI
 op slti(imm: int(12), src: reg_t, dest: reg_t)
 	syntax = format("slti %s, %s, %d", dest, src, imm)
 	image = format("%12b %s 010 %s 0010011", imm, src, dest)
 	action = {
-		setR(dest, if R[src] < imm then 1 else 0 endif); 
+		setR(dest, if R[src] < imm then 1 else 0 endif);
 	}
-	
+
 //// SLTIU, SEQZ
 op sltiu(imm: int(12), src: reg_t, dest: reg_t)
 	syntax =
@@ -82,24 +82,24 @@ op sltiu(imm: int(12), src: reg_t, dest: reg_t)
 		then format("seqz %s, %s", dest, src)
 		else format("sltiu %s, %s, %d", dest, src, imm)
 		endif
-	image = format("%12b %s 011 %s 0010011", imm, src, dest)	
+	image = format("%12b %s 011 %s 0010011", imm, src, dest)
 	action = {
 		setR(dest, if coerce(uword,R[src]) < coerce(uword,imm<31..0>) then 1 else 0 endif);
 	}
 
 //// ANDI
-op andi(imm: int(12), src: reg_t, dest: reg_t) //DONE
+op andi(imm: int(12), src: reg_t, dest: reg_t)
 	syntax = format("andi %s, %s, %d", dest, src, imm)
 	image = format("%12b %s 111 %s 0010011", imm, src, dest)
 	action = {
 		setR(dest, R[src] & coerce(word,imm));
 	}
-	
+
 //// ORI
-op ori(imm: int(12), src: reg_t, dest: reg_t) //DONE
+op ori(imm: int(12), src: reg_t, dest: reg_t)
 	syntax = format("ori %s, %s, %d", dest, src, imm)
 	image = format("%12b %s 110 %s 0010011", imm, src, dest)
-	action = {	
+	action = {
 		setR(dest, R[src] | coerce(word,imm));
 	}
 
@@ -111,21 +111,21 @@ op xori(imm: int(12), src: reg_t, dest: reg_t)
 		else format("xori %s, %s, %d", dest, src, imm)
 		endif
 	image = format("%12b %s 100 %s 0010011", imm, src, dest)
-	action = {	
+	action = {
 		setR(dest, R[src] ^ coerce(word,imm));
 	}
-	
-//// LUI	
-op lui(immediate: int(20), dest: reg_t) //DONE
+
+//// LUI
+op lui(immediate: int(20), dest: reg_t)
 	syntax = format("lui %s, %d", dest, immediate)
 	image  = format("%20b %s 0110111", immediate, dest)
 	action = {
 		setR(dest, coerce(word, immediate) << 12);
 	}
-	
+
 //// SLLI
-//slli, srli and srai generate an illegal instruction exception if shamt<5..5> != 0.	
-op slli(shamt: card(6), src: reg_t, dest: reg_t) //DONE
+//slli, srli and srai generate an illegal instruction exception if shamt<5..5> != 0.
+op slli(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("slli %s, %s, %d", dest, src, shamt)
 	image  = format("000000 %6b %s 001 %s 0010011", shamt, src, dest)
 	action = {
@@ -135,9 +135,9 @@ op slli(shamt: card(6), src: reg_t, dest: reg_t) //DONE
 			setR(dest,R[src] << shamt);
 		endif;
 	}
-	
-//// SRLI	
-op srli(shamt: card(6), src: reg_t, dest: reg_t) //DONE
+
+//// SRLI
+op srli(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("srli %s, %s, %d", dest, src, shamt)
 	image  = format("000000 %6b %s 101 %s 0010011", shamt, src, dest)
 	action = {
@@ -148,30 +148,30 @@ op srli(shamt: card(6), src: reg_t, dest: reg_t) //DONE
 		endif;
 	}
 
-//// SRAI	
+//// SRAI
 op srai(shamt: card(6), src: reg_t, dest: reg_t)
 	syntax = format("srai %s, %s, %d", dest, src, shamt)
 	image  = format("010000 %6b %s 101 %s 0010011", shamt, src, dest)
 	action = {
 		if shamt<5..5> != 0 then
 			SignalException(IllegalInstruction);
-		else	
+		else
 			setR(dest, coerce(word, R[src]) >> shamt);
 		endif;
 	}
 
-//// AUIPC		
+//// AUIPC
 op auipc(immediate: int(20), dest: reg_t)
 	syntax = format("auipc %s, %d", dest, immediate)
 	image  = format("%20b %s 0010111", immediate, dest)
 	action = {
-		setR(dest, __IADDR + (coerce(word, immediate) << 12)); 
+		setR(dest, __IADDR + (coerce(word, immediate) << 12));
 	}
 
 // RV32I Integer Register-Register Operations
 
-//// ADD	
-op add(src2: reg_t, src1: reg_t, dest: reg_t) //DONE
+//// ADD
+op add(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("add %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 000 %s 0110011", src2, src1, dest)
 	action = {
@@ -180,7 +180,7 @@ op add(src2: reg_t, src1: reg_t, dest: reg_t) //DONE
 
 //// SLT, SLTZ, SGTZ
 op slt(src2: reg_t, src1: reg_t, dest: reg_t)
-	syntax = 
+	syntax =
 		if src2 == 0
 		then format("sltz %s, %s", dest, src1) else if src1 == 0
 		then format("sgtz %s, %s", dest, src2)
@@ -188,7 +188,7 @@ op slt(src2: reg_t, src1: reg_t, dest: reg_t)
 		endif endif
 	image = format("0000000 %s %s 010 %s 0110011", src2, src1, dest)
 	action = {
-		setR(dest, if R[src1] < R[src2] then 1 else 0 endif); 
+		setR(dest, if R[src1] < R[src2] then 1 else 0 endif);
 	}
 
 //// SLTU, SNEZ
@@ -202,16 +202,16 @@ op sltu(src2: reg_t, src1: reg_t, dest: reg_t)
 	action = {
 		setR(dest, if coerce(uword, R[src1]) < coerce(uword, R[src2]) then 1 else 0 endif);
 	}
-	
-//// AND	
+
+//// AND
 op and(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("and %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 111 %s 0110011", src2, src1, dest)
 	action = {
 		setR(dest, R[src1] & R[src2]);
 	}
-	
-//// OR	
+
+//// OR
 op or(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("or %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 110 %s 0110011", src2, src1, dest)
@@ -219,35 +219,33 @@ op or(src2: reg_t, src1: reg_t, dest: reg_t)
 		setR(dest, R[src1] | R[src2]);
 	}
 
-//// XOR	
+//// XOR
 op xor(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("xor %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 100 %s 0110011", src2, src1, dest)
 	action = {
 		setR(dest, R[src1] ^ R[src2]);
-	}	
-	
+	}
+
 //// SLL
 op sll(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sll %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 001 %s 0110011", src2, src1, dest)
 	action = {
 		let s = R[src2]<4..0>;
-		let temp = R[src1] << s;
-		setR(dest, temp);
+		setR(dest, R[src1] << s);
 	}
-	
+
 //// SRL
 op srl(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("srl %s, %s, %s", dest, src1, src2)
 	image = format("0000000 %s %s 101 %s 0110011", src2, src1, dest)
 	action = {
 		let s = R[src2]<4..0>;
-		let temp = coerce(uword, R[src1]) >> s;
-		setR(dest,temp);
+		setR(dest,coerce(uword, R[src1]) >> s);
 	}
 
-//// SUB, NEG	
+//// SUB, NEG
 op sub(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax =
 		if src1 == 0
@@ -258,13 +256,12 @@ op sub(src2: reg_t, src1: reg_t, dest: reg_t)
 	action = {
 		setR(dest, R[src1] - R[src2]);
 	}
-	
-//// SRA	
+
+//// SRA
 op sra(src2: reg_t, src1: reg_t, dest: reg_t)
 	syntax = format("sra %s, %s, %s", dest, src1, src2)
 	image = format("0100000 %s %s 101 %s 0110011", src2, src1, dest)
 	action = {
 		let s = R[src2]<4..0>;
-		let temp = coerce(word, R[src1]) >> s;
-		setR(dest,temp);
+		setR(dest,coerce(word, R[src1]) >> s);
 	}

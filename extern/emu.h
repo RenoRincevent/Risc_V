@@ -71,11 +71,7 @@ uint32_t reserved(int memoryWord);
 int lrAddr;
 int hasLr;
 
-float rounding(float result, int rm);
-double fsqrt32(double src);
-
-double roundingDouble(double result, int rm);
-double fsqrt64(double src);
+void idle_While_No_Interrupts_Pending();
 
 #if defined(__cplusplus)
 }

@@ -27,13 +27,9 @@ canon uword "COP_SW"(z: card(2), rt: card(4))
 canon "SyncOperation"(stype: card(5))
 canon "aquirement"()
 canon "release"()
-canon float(23,9) "rounding"(result: float(23,9), rm: card(3))
 canon "notReserve"()
 canon "reserve"(memoryWord: int(32))
 canon uword "reserved"(memoryWord: int(32))
-canon float(52,12) "fsqrt32"(src: float(52,12))
-canon float(52,12) "roundingDouble"(result: float(52,12), rm: int(32))
-canon float(52,12) "fsqrt64"(src: float(52,12))
 
 canon word "fp_testexcept"(word)
 canon "fp_clearexcept"(word)
@@ -47,6 +43,8 @@ canon word "FP_UNDERFLOW"
 canon word "FP_OVERFLOW"
 canon word "FP_INVALID"
 canon word "FP_ALLEXCEPT"
+
+canon "idle_While_No_Interrupts_Pending"()
 
 // macros
 macro _32_bit_arithmetic_overflow(d, t, s) = \
@@ -109,11 +107,3 @@ macro release() = "release"()
 macro notReserve() = "notReserve"()
 macro reserve(memoryWord) = "reserve"(memoryWord)
 macro reserved(memoryWord) = "reserved"(memoryWord)
-
-//macro for floating-point operations
-macro rounding(result,rm) = "rounding"(result,rm)
-macro fsqrt32(src) = "fsqrt32"(src)
-
-//
-macro roundingDouble(result,rm) = "roundingDouble"(result,rm)
-macro fsqrt64(src) = "fsqrt64"(src)

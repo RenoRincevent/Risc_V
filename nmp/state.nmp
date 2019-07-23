@@ -33,5 +33,5 @@ reg PC  	[ 1, address] is_pc = 1
 reg NPC 	[ 1, address]
 reg R		[32, word]
 reg F		[32, float(52,12)]
-reg LLbit	[ 1, card(1)]
+reg LLbit	[ 1, card(1)] //What ?
 reg CSRS	[4096,address]

@@ -5,7 +5,7 @@ ARCH=RV32G
 GLISS_PREFIX	=../gliss2
 WITH_DISASM		= 1	# comment it to prevent disassembler building
 WITH_SIM		= 1	# comment it to prevent simulator building
-#WITH_DYNLIB	= 1	# uncomment it to build dynamicaly linkable library
+WITH_DYNLIB	= 1	# uncomment it to build dynamicaly linkable library
 #WITH_OSEMUL	= 1 # uncomment it to use OS emulation of system calls (only with Unix)
 CPU_ENDIAN		= little	# change to big if required
 MEM_ENDIAN		= little	# change to big if required
@@ -54,7 +54,7 @@ GFLAGS = \
 	-m emu:extern/emu \
 	-m env:$(ENV) \
 	-a disasm.c \
-	-m exception:extern/exception 
+	-m exception:extern/exception
 
 #	-m fpi:extern/fpi \
 
@@ -72,8 +72,8 @@ NMP =\
 	nmp/RV32A.nmp \
 	nmp/RV32D.nmp \
 	nmp/RV32F.nmp \
-	nmp/RV32M.nmp 
-	
+	nmp/RV32M.nmp
+
 ifeq ($(ARCH), RV64G)
 NMP =\
 	$(NMP_MAIN) \
@@ -141,5 +141,3 @@ include/$(ARCH)/config.h: config.tpl
 	cp config.tpl $@
 	echo "#define TARGET_ENDIANNESS $(CPU_ENDIAN)" >> $@
 	echo "#define HOST_ENDIANNESS $(HOST_ENDIAN)" >> $@
-
-
